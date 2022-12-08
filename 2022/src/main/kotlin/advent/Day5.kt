@@ -22,7 +22,7 @@ object Day5 : AdventDay {
         return state.map { it.last() }.joinToString("")
     }
 
-    fun parseInput(input: List<String>): Pair<List<MutableList<Char>>, List<Move>> {
+    private fun parseInput(input: List<String>): Pair<List<MutableList<Char>>, List<Move>> {
         val splitIndex = input.indexOf("")
         val unparsedState = input.take(splitIndex - 1)
         val unparsedInstructions = input.drop(splitIndex + 1)
@@ -41,6 +41,6 @@ object Day5 : AdventDay {
         return state to instructions
     }
 
-    data class Move(val quantity: Int, val from: Int, val to: Int)
+    private data class Move(val quantity: Int, val from: Int, val to: Int)
 
 }
