@@ -3,9 +3,9 @@ package advent
 import java.io.File
 
 sealed interface AdventDay {
-    fun part1(input: List<String>): Int
+    fun part1(input: List<String>): Any
 
-    fun part2(input: List<String>): Int
+    fun part2(input: List<String>): Any
 }
 
 fun main(args: Array<String>) {
