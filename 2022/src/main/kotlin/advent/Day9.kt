@@ -13,7 +13,7 @@ object Day9 : AdventDay {
     }
 
     override fun part2(input: List<String>): Any {
-        val states = mutableListOf(GridStateN(List(10) { Vector2.zero() }))
+        val states = mutableListOf(GridStateN(List(10) { Vector2() }))
         input.forEach {
             val (direction, movesString) = it.split(' ')
             (1..movesString.toInt()).forEach {
@@ -62,6 +62,7 @@ object Day9 : AdventDay {
             if (index == knots.size - 1) return listOf(newHead)
             val headTailDiff = newHead - knots[index + 1]
             val absDiff = headTailDiff.abs()
+            absDiff.linearMagnitude()
             val tailMove = if (absDiff.x > 1 || absDiff.y > 1) {
                 val diffDirection = headTailDiff.sign()
                 val tailMove = if (absDiff.x > absDiff.y) {
@@ -76,12 +77,8 @@ object Day9 : AdventDay {
                     throw RuntimeException("Failed to apply change. State: $this, change: $by, newHead $newHead, diff $headTailDiff ")
                 }
                 (tailMove * diffDirection)
-            } else Vector2.zero()
+            } else Vector2()
             return listOf(newHead) + move(knots, tailMove, index + 1)
         }
     }
-
-
-
-
 }

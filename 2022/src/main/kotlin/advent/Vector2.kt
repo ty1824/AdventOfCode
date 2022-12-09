@@ -3,11 +3,8 @@ package advent
 import kotlin.math.abs
 import kotlin.math.sign
 
-data class Vector2(val x: Int, val y: Int) {
-    companion object {
-        fun zero(): Vector2 = Vector2(0, 0)
-    }
-}
+data class Vector2(val x: Int = 0, val y: Int = 0)
+
 operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, this.y + other.y)
 operator fun Vector2.minus(other: Vector2): Vector2 = Vector2(this.x - other.x, this.y - other.y)
 operator fun Vector2.times(other: Vector2): Vector2 = Vector2(this.x * other.x, this.y * other.y)

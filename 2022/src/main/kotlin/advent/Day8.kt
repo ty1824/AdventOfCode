@@ -1,6 +1,5 @@
 package advent
 
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -22,7 +21,6 @@ object Day8 : AdventDay {
     class Grid(private val trees: IntArray) {
         private val dimension = sqrt(trees.size.toDouble()).toInt()
 
-        private val largest : Array<IntArray> = Array(trees.size) { IntArray(4) { -1 } }
         private val larger: Array<IntArray> = Array(trees.size) { IntArray(4) { -1 } }
 
         private fun Pair<Int, Int>.toIndex(): Int = (dimension * this.second) + (this.first)
@@ -50,32 +48,13 @@ object Day8 : AdventDay {
                             neighbor = neighborLarger.toLocation()
                     }
                 }
-                larger[index][direction] = if (result < 0) { index } else { result }
+                larger[index][direction] = result
             }
             return larger[index][direction]
         }
 
-        private fun getLargestTreeInDirection(location: Pair<Int, Int>, direction: Int): Int {
-            val index = location.toIndex()
-            if (largest[index][direction] < 0) {
-                val neighbor = location.getNeighboringLocation(direction)
-                if (neighbor.isOffGrid() || trees[index] > trees[getLargestTreeInDirection(neighbor, direction)]) {
-                    // If we are on the edge & our neighbor is off the board, we are the largest in the direction
-                    // Alternately, if we are taller than the other largest tree, use our height
-                    largest[index][direction] = index
-                } else {
-                    largest[index][direction] = getLargestTreeInDirection(neighbor, direction)
-                }
-            }
-            return largest[index][direction]
-        }
-
         private fun isLocationVisibleFrom(location: Pair<Int, Int>, direction: Int): Boolean {
-            val index = location.toIndex()
-            val neighbor = location.getNeighboringLocation(direction)
-            return if (neighbor.isOffGrid()) { true } else {
-                trees[index] > trees[getLargestTreeInDirection(neighbor, direction)]
-            }
+            return getSameOrLargerTreeInDirection(location, direction) == location.toIndex()
         }
 
         private fun isLocationVisible(location: Pair<Int, Int>): Boolean {
@@ -119,7 +98,6 @@ object Day8 : AdventDay {
             }.reduce(Int::times)
         }
 
-        private var debug = false
         fun getLargestScenicScore(): Int {
             val maxLocation = trees.mapIndexed { index, _ -> index.toLocation() }.maxBy { getScenicScore(it) }
             return getScenicScore(maxLocation)
@@ -138,13 +116,5 @@ object Day8 : AdventDay {
         }
     }
 
-    fun Int.toDirection(): String = when (this) {
-        TOP -> "TOP"
-        BOTTOM -> "BOTTOM"
-        LEFT -> "LEFT"
-        RIGHT -> "RIGHT"
-        else -> "error"
-    }
-
-    fun parseGrid(input: List<String>): Grid = Grid(input.flatMap { row -> row.map { it.digitToInt() } }.toIntArray())
+    private fun parseGrid(input: List<String>): Grid = Grid(input.flatMap { row -> row.map { it.digitToInt() } }.toIntArray())
 }
