@@ -1,6 +1,8 @@
 package advent
 
 import java.io.File
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 sealed interface AdventDay {
     fun part1(input: List<String>): Any
@@ -8,6 +10,7 @@ sealed interface AdventDay {
     fun part2(input: List<String>): Any
 }
 
+@OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
     val day = if (args.size > 0) args[0] else {
         println("Enter the day you want to run")
@@ -20,8 +23,14 @@ fun main(args: Array<String>) {
     }.objectInstance!!
 
     println("Part 1:")
-    println(solutionRunner.part1(input))
+    val part1Time = measureTime {
+        println(solutionRunner.part1(input))
+    }
+    println("time: ${part1Time.inWholeMilliseconds}ms")
 
     println("Part 2:")
-    println(solutionRunner.part2(input))
+    val part2Time = measureTime {
+        println(solutionRunner.part2(input))
+    }
+    println("time: ${part2Time.inWholeMilliseconds}ms")
 }
