@@ -5,43 +5,35 @@ object Day10 : AdventDay {
 
     override fun part1(input: List<String>): Any {
         val states = computeStates(input)
-        return interestingCycles.map {
-            val state = states[it]
-            state.cycle * state.startX
-        }.sum()
+        return interestingCycles.sumOf { cycle ->
+            cycle * states[cycle - 1]
+        }
     }
 
     override fun part2(input: List<String>): Any {
         val states = computeStates(input)
         // Pixels distinct from cycles distinct from pixel location
-        return (0..239).chunked(40).joinToString("\n") { row ->
+        return (1..240).chunked(40).joinToString("\n") { row ->
             row.joinToString("") { cycle ->
-                val state = states[cycle + 1]
+                val x = states[cycle - 1]
                 when {
                     // Range = sprite location
-                    ((state.startX - 1)..(state.startX + 1)).contains(cycle % 40) -> "#"
+                    ((x - 1)..(x + 1)).contains((cycle - 1) % 40) -> "#"
                     else -> " "
                 }
             }
         }
     }
 
-    private fun computeStates(input: List<String>): List<State> =
-        input.fold(listOf(State(0, 1, 1))) { acc, inst ->
+    private fun computeStates(input: List<String>): List<Int> =
+        input.fold(listOf(1)) { acc, inst ->
             acc + acc.last().processInstruction(inst)
         }
 
-    data class State(val cycle: Int, val startX: Int, val endX: Int)
-
-    private fun State.processInstruction(instruction: String): List<State> {
+    private fun Int.processInstruction(instruction: String): List<Int> {
         return when (instruction.substringBefore(' ')) {
-            "noop" -> listOf(
-                State(this.cycle + 1, this.endX, this.endX)
-            )
-            "addx" -> listOf(
-                State(this.cycle + 1, this.endX, this.endX),
-                State(this.cycle + 2, this.endX, this.endX + instruction.substringAfter(' ').toInt())
-            )
+            "noop" -> listOf(this)
+            "addx" -> listOf(this, this + instruction.substringAfter(' ').toInt())
             else -> throw RuntimeException("Invalid instruction $instruction")
         }
     }
