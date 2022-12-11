@@ -12,7 +12,7 @@ object Day10 : AdventDay {
 
     override fun part2(input: List<String>): Any {
         val states = computeStates(input)
-        // Pixels distinct from cycles distinct from pixel location
+        // Cycles distinct from pixels ((cycle - 1) % 40
         return (1..240).chunked(40).joinToString("\n") { row ->
             row.joinToString("") { cycle ->
                 val x = states[cycle - 1]

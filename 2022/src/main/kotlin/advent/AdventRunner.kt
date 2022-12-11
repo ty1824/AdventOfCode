@@ -12,11 +12,12 @@ sealed interface AdventDay {
 
 @OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
+    println(args.toList())
     val day = if (args.size > 0) args[0] else {
         println("Enter the day you want to run")
         readLine()!!.toInt()
     }
-    val inputFile = if (args.size > 1) File(args[1]) else File(AdventDay::class.java.getResource("day${day}.txt")!!.toURI())
+    val inputFile = File(AdventDay::class.java.getResource(if (args.size > 1) { args[1] } else { "day${day}.txt" })!!.toURI())
     val input = inputFile.readLines()
     val solutionRunner = AdventDay::class.sealedSubclasses.first {
         it.simpleName == "Day${day}"
