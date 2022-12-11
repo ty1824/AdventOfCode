@@ -1,12 +1,6 @@
-@file:OptIn(ExperimentalTime::class)
-
 package advent
 
-import java.math.BigInteger
 import java.util.LinkedList
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
 
 object Day11 : AdventDay {
 
@@ -76,44 +70,53 @@ object Day11 : AdventDay {
         }
     }
 
-
-    var totalInspectionTime = Duration.ZERO
-    var totalThrowTime = Duration.ZERO
     override fun part2(input: List<String>): Any {
         val state = State2(parseInitialState2(input))
-        repeat(100) { round ->
-            state.evaluateRound()
-            println("Round: $round, Inspection: $totalInspectionTime, Throw: $totalThrowTime")
-//            totalInspectionTime = Duration.ZERO
-//            totalThrowTime = Duration.ZERO
-        }
+        repeat(10000) { state.evaluateRound() }
         return state.timesInspected.sorted().takeLast(2).reduce(Long::times)
     }
 
-    private fun parseInitialState2(input: List<String>): Array<Monkey2> =
-        input.windowed(6, 7, true).map { lines ->
+    private fun parseInitialState2(input: List<String>): Array<Monkey2> {
+        val worryValues: MutableList<WorryValue> = mutableListOf()
+        fun createWorryValue(value: Int): WorryValue {
+            val worryValue = WorryValue(value)
+            worryValues += worryValue
+            return worryValue
+        }
+        val monkeys = input.windowed(6, 7, true).map { lines ->
             Monkey2(
-                items = LinkedList(lines[1].substringAfter("Starting items: ").split(", ").map { WorryNumber(listOf(it.toBigInteger())) }),
+                items = LinkedList(lines[1].substringAfter("Starting items: ").split(", ").map { createWorryValue(it.toInt()) }),
                 operation = parseOperation2(lines[2].substringAfter("Operation: new = ")),
-                divisible = lines[3].substringAfter("Test: divisible by ").toBigInteger(),
+                divisible = lines[3].substringAfter("Test: divisible by ").toInt(),
                 ifTrue = lines[4].substringAfter("If true: throw to monkey ").toInt(),
                 ifFalse = lines[5].substringAfter("If false: throw to monkey ").toInt()
             )
         }.toTypedArray()
+        val divisibles = monkeys.map { it.divisible }
+        worryValues.forEach { it.initModulusMap(divisibles) }
+        return monkeys
+    }
 
-    private fun parseOperation2(input: String): (WorryNumber) -> WorryNumber {
+    private fun parseOperation2(input: String): (WorryValue) -> Unit {
         val tokens = input.split(' ')
-        val operator: (WorryNumber, WorryNumber) -> WorryNumber = when (tokens[1]) {
-            "+" -> WorryNumber::plus
-            "*" -> WorryNumber::times
-            else -> throw RuntimeException("Failed to parse operator: ${tokens[1]}")
+        return if (tokens[2] == "old") {
+            when (tokens[1]) {
+                "+" -> { it -> it * 2 }
+                "*" -> { it -> it.square() }
+                else -> throw RuntimeException("Invalid operator: ${tokens[1]}")
+            }
+        } else {
+            val constant = tokens[2].toInt()
+            when (tokens[1]) {
+                "+" -> { it -> it + constant }
+                "*" -> { it -> it * constant }
+                else -> throw RuntimeException("Invalid operator: ${tokens[1]}")
+            }
         }
-        val left = tokens[0].toBigIntegerOrNull()?.let { WorryNumber(listOf(it)) }
-        val right = tokens[2].toBigIntegerOrNull()?.let { WorryNumber(listOf(it)) }
-        return { operator(left ?: it, right ?: it) }
     }
 
     class State2(val monkeys: Array<Monkey2>) {
+        val lcm = monkeys.map { it.divisible }.reduce(Int::times)
         val timesInspected: LongArray = LongArray(monkeys.size)
 
         fun evaluateRound() {
@@ -123,36 +126,67 @@ object Day11 : AdventDay {
         private fun evaluateTurn(index: Int) {
             val monkey = monkeys[index]
             while (monkey.items.isNotEmpty()) {
-                val initialItemWorry = monkey.items.removeFirst()
-                val (postInspectionWorry, inspectionTime) = measureTimedValue { monkey.operation(initialItemWorry) }
-                totalInspectionTime += inspectionTime
+                val item = monkey.items.removeFirst()
+                monkey.operation(item)
                 timesInspected[index]++
-                val (throwTarget, throwTime) = measureTimedValue { monkey.checkThrowTarget(postInspectionWorry) }
-                totalThrowTime += throwTime
-                monkeys[throwTarget].items += postInspectionWorry
+                val throwTarget = monkey.checkThrowTarget(item)
+                monkeys[throwTarget].items += item
             }
         }
     }
 
-    class WorryNumber(val numbers: List<BigInteger>) {
+    /**
+     * When adding, a number becomes divisible by some other if its modulus becomes 0
+     * Addition may remove divisible status. If the addend modulo the other number is 0, the number retains divisible status.
+     * When multiplying, a number becomes divisible by some other if the multiplicand is divisible by the other
+     * Multiplying does not change divisible status.
+     *
+     * e.g. 13 is not divisible by 3.
+     * 13 + 2 is divisible by 3 (15 % 3 is 0)
+     * 13 * 2 is not divisible by 3 (2 is not divisible by 3)
+     * 15 * 342 is divisible by 3 (5130 % 3 is 0)
+     * 5130 + 2 is not divisible by 3.
+     *
+     * Ok, so what happens when multiplying something that is not divisible (mod is nonzero)
+     *
+     * 13 is not divisible by 11 (modulus = 2)
+     * 13 * 19 = 247 (modulus = 5, which is 2 * 19 % 11)
+     *
+     * https://en.wikipedia.org/wiki/Modular_arithmetic
+     */
+    class WorryValue(private val initial: Int) {
+        private lateinit var divisors: List<Int>
+        private lateinit var modulusMap: MutableMap<Int, Int>
 
-        fun getRaw(): BigInteger = numbers.reduce(BigInteger::times)
+        fun initModulusMap(divisors: List<Int>) {
+            this.divisors = divisors
+            this.modulusMap = divisors.associateWith { initial % it }.toMutableMap()
+        }
 
-        fun plus(other: WorryNumber): WorryNumber = WorryNumber(listOf(getRaw() + other.getRaw()))
+        fun square() {
+            this.modulusMap.replaceAll { key, value -> (value * value) % key }
+        }
 
-        fun times(other: WorryNumber): WorryNumber = WorryNumber(this.numbers + other.numbers)
+        operator fun plus(other: Int) {
+            this.modulusMap.replaceAll { key, value -> (value + other) % key }
+        }
 
-        fun isDivisibleBy(num: BigInteger): Boolean = numbers.any { it % num == BigInteger.ZERO}
+        operator fun times(other: Int) {
+            this.modulusMap.replaceAll { key, value -> (value * other) % key }
+        }
+
+        fun isDivisibleBy(num: Int): Boolean = modulusMap[num] == 0
+
     }
 
     data class Monkey2(
-        val items: LinkedList<WorryNumber>,
-        val operation: (WorryNumber) -> WorryNumber,
-        val divisible: BigInteger,
+        val items: LinkedList<WorryValue>,
+        val operation: (WorryValue) -> Unit,
+        val divisible: Int,
         val ifTrue: Int,
         val ifFalse: Int
     ) {
-        fun checkThrowTarget(worry: WorryNumber): Int =
+        fun checkThrowTarget(worry: WorryValue): Int =
             if (worry.isDivisibleBy(divisible))
                 this.ifTrue
             else
