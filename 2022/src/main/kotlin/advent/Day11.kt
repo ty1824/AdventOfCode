@@ -9,7 +9,6 @@ object Day11 : AdventDay {
         repeat(20) {
             state.evaluateRound()
         }
-        println(state.timesInspected.toList())
         return state.timesInspected.sorted().takeLast(2).reduce(Int::times)
     }
 
@@ -116,7 +115,6 @@ object Day11 : AdventDay {
     }
 
     class State2(val monkeys: Array<Monkey2>) {
-        val lcm = monkeys.map { it.divisible }.reduce(Int::times)
         val timesInspected: LongArray = LongArray(monkeys.size)
 
         fun evaluateRound() {
@@ -176,7 +174,6 @@ object Day11 : AdventDay {
         }
 
         fun isDivisibleBy(num: Int): Boolean = modulusMap[num] == 0
-
     }
 
     data class Monkey2(
