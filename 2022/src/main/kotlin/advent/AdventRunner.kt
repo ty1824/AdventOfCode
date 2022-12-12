@@ -4,12 +4,6 @@ import java.io.File
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-sealed interface AdventDay {
-    fun part1(input: List<String>): Any
-
-    fun part2(input: List<String>): Any
-}
-
 @OptIn(ExperimentalTime::class)
 fun main(args: Array<String>) {
     val day = if (args.size > 0) args[0] else {
@@ -22,6 +16,8 @@ fun main(args: Array<String>) {
     val solutionRunner = AdventDay::class.sealedSubclasses.first {
         it.simpleName == "Day${day}"
     }.objectInstance!!
+
+    println("Running day $day on input $filepath")
 
     println("Part 1:")
     val part1Time = measureTime {
