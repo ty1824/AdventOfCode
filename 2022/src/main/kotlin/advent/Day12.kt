@@ -1,7 +1,5 @@
 package advent
 
-import java.util.concurrent.TimeUnit
-
 object Day12 : AdventDay {
     override fun part1(input: List<String>): Any {
         val heightMap = parseMap(input)
@@ -36,7 +34,7 @@ object Day12 : AdventDay {
             visitedLocations += newLocations
             frontier = newLocations
             step++
-        } while (!frontier.any { heightMap.valueAt(it) == 'a' || heightMap.valueAt(it) == 'S' })
+        } while (!frontier.any { heightMap.heightAt(it) == 'a' })
         return step
     }
 
@@ -57,9 +55,7 @@ object Day12 : AdventDay {
                 endLocation -> 'z'
                 else -> tiles[locationToIndex(location)]
             }
-
-        fun valueAt(location: Vector2): Char = tiles[locationToIndex((location))]
-
+        
         fun getTraversableLocations(location: Vector2): Iterable<Vector2> {
             val from = heightAt(location)
             return neighborVectors.map(location::plus)
