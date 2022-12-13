@@ -3,6 +3,13 @@ package advent
 import kotlin.math.abs
 import kotlin.math.sign
 
+val UP = 0
+val DOWN = 1
+val LEFT = 2
+val RIGHT = 3
+val DIRECTIONS = intArrayOf(UP, DOWN, LEFT, RIGHT)
+val DIRECTION_VECTORS = listOf(Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0))
+
 data class Vector2(val x: Int = 0, val y: Int = 0)
 
 operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, this.y + other.y)

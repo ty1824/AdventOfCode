@@ -12,40 +12,28 @@ object Day8 : AdventDay {
         return parseGrid(input).getLargestScenicScore()
     }
 
-    private const val TOP = 0
-    private const val BOTTOM = 1
-    private const val LEFT = 2
-    private const val RIGHT = 3
-    val DIRECTIONS = intArrayOf(TOP, BOTTOM, LEFT, RIGHT)
+    class Trees(private val grid: IntGrid) {
+        private val larger: Array<IntArray> = Array(grid.size) { IntArray(4) { -1 } }
 
-    class Grid(private val trees: IntArray) {
-        private val dimension = sqrt(trees.size.toDouble()).toInt()
-
-        private val larger: Array<IntArray> = Array(trees.size) { IntArray(4) { -1 } }
-
-        private fun Pair<Int, Int>.toIndex(): Int = (dimension * this.second) + (this.first)
-
-        private fun Int.toLocation(): Pair<Int, Int> = (this % dimension) to (this / dimension)
-
-        private fun getSameOrLargerTreeInDirection(location: Pair<Int, Int>, direction: Int): Int {
-            val index = location.toIndex()
+        private fun getSameOrLargerTreeInDirection(location: Vector2, direction: Int): Int {
+            val index = grid.locationToIndex(location)
             if (larger[index][direction] < 0) {
-                val thisSize = trees[index]
-                var neighbor = location.getNeighboringLocation(direction)
+                val thisSize = grid[index]
+                var neighbor = location + direction
                 var result = index
-                while (!neighbor.isOffGrid() && result == index) {
-                    val neighborIndex = neighbor.toIndex()
-                    if (thisSize <= trees[neighborIndex])
+                while (grid.isOnGrid(neighbor) && result == index) {
+                    val neighborIndex = grid.locationToIndex(neighbor)
+                    if (thisSize <= grid[neighborIndex])
                         result = neighborIndex
                     else {
                         val neighborLarger = getSameOrLargerTreeInDirection(neighbor, direction)
                         if (neighborLarger == neighborIndex) {
                             break
-                        } else if (trees[neighborLarger] >= thisSize) {
+                        } else if (grid[neighborLarger] >= thisSize) {
                             result = neighborLarger
                             break
                         } else
-                            neighbor = neighborLarger.toLocation()
+                            neighbor = grid.indexToLocation(neighborLarger)
                     }
                 }
                 larger[index][direction] = result
@@ -53,43 +41,37 @@ object Day8 : AdventDay {
             return larger[index][direction]
         }
 
-        private fun isLocationVisibleFrom(location: Pair<Int, Int>, direction: Int): Boolean {
-            return getSameOrLargerTreeInDirection(location, direction) == location.toIndex()
+        private fun isLocationVisibleFrom(location: Vector2, direction: Int): Boolean {
+            return getSameOrLargerTreeInDirection(location, direction) == grid.locationToIndex(location)
         }
 
-        private fun isLocationVisible(location: Pair<Int, Int>): Boolean {
+        private fun isLocationVisible(location: Vector2): Boolean {
             return DIRECTIONS.any { direction -> isLocationVisibleFrom(location, direction) }
         }
 
-        fun getVisibleLocations(): List<Pair<Int, Int>> =
-            trees.mapIndexed { index, _ -> index.toLocation() }
+        fun getVisibleLocations(): List<Vector2> =
+            grid.elements.mapIndexed { index, _ -> grid.indexToLocation(index) }
                 .filter { isLocationVisible(it) }
 
-        private fun getLargerTrees(location: Pair<Int, Int>): List<Pair<Int, Int>> =
-            DIRECTIONS.map { direction -> getSameOrLargerTreeInDirection(location, direction).toLocation() }
+        private fun getLargerTrees(location: Vector2): List<Vector2> =
+            DIRECTIONS.map { direction -> grid.indexToLocation(getSameOrLargerTreeInDirection(location, direction)) }
 
-        private fun getTreesInDirection(location: Pair<Int, Int>, direction: Int): Int {
+        private fun getTreesInDirection(location: Vector2, direction: Int): Int {
+            return grid.locationToIndex(location + DIRECTION_VECTORS[direction])
+        }
+
+        private fun getDirectionalDistance(location: Vector2, otherLocation: Vector2, direction: Int): Int {
             return when (direction) {
-                TOP -> location.second
-                BOTTOM -> dimension - location.second - 1
-                LEFT -> location.first
-                RIGHT -> dimension - location.first - 1
+                UP, DOWN -> abs(otherLocation.y - location.y)
+                LEFT, RIGHT -> abs(otherLocation.x - location.x)
                 else -> throw RuntimeException("Bad direction: $direction")
             }
         }
 
-        private fun getDirectionalDistance(location: Pair<Int, Int>, otherLocation: Pair<Int, Int>, direction: Int): Int {
-            return when (direction) {
-                TOP, BOTTOM -> abs(otherLocation.second - location.second)
-                LEFT, RIGHT -> abs(otherLocation.first - location.first)
-                else -> throw RuntimeException("Bad direction: $direction")
-            }
-        }
-
-        private fun getScenicScore(location: Pair<Int, Int>): Int {
-            val index = location.toIndex()
+        private fun getScenicScore(location: Vector2): Int {
+            val index = grid.locationToIndex(location)
             return getLargerTrees(location).mapIndexed { direction, otherLocation ->
-                if (otherLocation.toIndex() == index)
+                if (grid.locationToIndex(otherLocation) == index)
                     // We are the tallest tree and thus can see to the edge
                     getTreesInDirection(location, direction)
                 else
@@ -99,22 +81,13 @@ object Day8 : AdventDay {
         }
 
         fun getLargestScenicScore(): Int {
-            val maxLocation = trees.mapIndexed { index, _ -> index.toLocation() }.maxBy { getScenicScore(it) }
+            val maxLocation = grid.elements.mapIndexed { index, _ -> grid.indexToLocation(index) }.maxBy { getScenicScore(it) }
             return getScenicScore(maxLocation)
         }
 
-
-        private fun Pair<Int, Int>.isOffGrid() =
-            this.first < 0 || this.first >= dimension || this.second < 0 || this.second >= dimension
-
-        private fun Pair<Int, Int>.getNeighboringLocation(direction: Int) = when (direction) {
-            TOP -> this.first to this.second - 1
-            BOTTOM -> this.first to this.second + 1
-            LEFT -> this.first - 1 to this.second
-            RIGHT -> this.first + 1 to this.second
-            else -> throw RuntimeException("Not a valid direction: $direction")
-        }
+        private fun Vector2.getNeighboringLocation(direction: Int) = this + DIRECTION_VECTORS[direction]
     }
 
-    private fun parseGrid(input: List<String>): Grid = Grid(input.flatMap { row -> row.map { it.digitToInt() } }.toIntArray())
+    private fun parseGrid(input: List<String>): Trees =
+        Trees(IntGrid(input.flatMap { row -> row.map { it.digitToInt() } }.toIntArray(), input.first().length, input.size))
 }
