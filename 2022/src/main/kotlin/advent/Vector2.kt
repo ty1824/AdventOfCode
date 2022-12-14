@@ -25,3 +25,5 @@ operator fun Vector2.plus(value: Int): Vector2 = Vector2(this.x + value, this.y 
 operator fun Vector2.minus(value: Int): Vector2 = Vector2(this.x - value, this.y - value)
 operator fun Vector2.times(value: Int): Vector2 = Vector2(this.x * value, this.y * value)
 operator fun Vector2.div(value: Int): Vector2 = Vector2(this.x / value, this.y / value)
+
+data class Path(val points: List<Vector2>)

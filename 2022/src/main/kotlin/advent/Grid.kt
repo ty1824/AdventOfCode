@@ -5,8 +5,10 @@ interface Grid<T> {
 
     val height: Int
 
+    operator fun set(index: Int, value: T)
+    operator fun set(location: Vector2, value: T) = set(locationToIndex(location), value)
     operator fun get(index: Int): T
-    operator fun get(location: Vector2): T
+    operator fun get(location: Vector2): T = get(locationToIndex(location))
 
     val size: Int
         get() = width * height
@@ -26,7 +28,7 @@ class IntGrid(
     override val width: Int,
     override val height: Int
 ) : Grid<Int> {
-    override fun get(location: Vector2): Int = elements[locationToIndex(location)]
+    override fun set(index: Int, value: Int) { elements[index] = value }
     override fun get(index: Int): Int = elements[index]
 
     /**
@@ -41,7 +43,7 @@ class CharGrid(
     override val width: Int,
     override val height: Int
 ) : Grid<Char> {
-    override fun get(location: Vector2): Char = elements[locationToIndex(location)]
+    override fun set(index: Int, value: Char) { elements[index] = value }
     override fun get(index: Int): Char = elements[index]
 
     /**
@@ -56,6 +58,6 @@ class GenericGrid<T> (
     override val width: Int,
     override val height: Int
 ) : Grid<T> {
-    override operator fun get(location: Vector2): T = elements[locationToIndex(location)]
+    override fun set(index: Int, value: T) { elements[index] = value }
     override fun get(index: Int): T = elements[index]
 }
