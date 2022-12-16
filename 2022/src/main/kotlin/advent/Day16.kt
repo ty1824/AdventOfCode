@@ -16,36 +16,6 @@ object Day16 : AdventDay {
         val usefulValves: Set<String> = map.filter { it.value.flow != 0 }.keys
         operator fun get(key: String): Valve = map[key]!!
 
-        private val timeToValveCache: MutableMap<String, Map<String, Int>> = mutableMapOf()
-
-        @Deprecated("Doesn't actually give the max value")
-        fun greedyMax(at: String, timeLeft: Int, visited: List<String>): Int {
-            println("Starting iteration at $at with $timeLeft time left.")
-            if (timeLeft <= 1) return 0
-            val newVisited = visited + at
-            val timeToValves = timeToValve(at)
-            if (timeToValves.values.min() > timeLeft) return 0
-            val valueAtTime = valueAtTime(at, timeLeft).filter { !newVisited.contains(it.key) }
-            // Get the highest value valve
-            val (valve, value) = valueAtTime.entries.maxByOrNull { it.value }!!
-            println("Moving from $at to $valve takes ${timeToValves[valve]!! + 1} minutes. Will release a total of $value pressure")
-            return value + greedyMax(valve, timeLeft - (timeToValves[valve]!! + 1), newVisited)
-        }
-
-        /**
-         * Only works for a single actor. Used to solve part 1.
-         */
-        fun maxValueGivenTime(position: String, time: Int, visited: List<String>): Pair<List<String>, Int> =
-            timeToValve(position).filter { it.key != position && !visited.contains(it.key) }
-                .map { (valve, timeTo) ->
-                    if (timeTo + 1 >= time) visited to 0
-                    else {
-                        val timeLeftAfterOpening = time - (timeTo + 1)
-                        val (nextVisited, nextMaxValue) = maxValueGivenTime(valve, timeLeftAfterOpening, visited + position)
-                        nextVisited to this[valve].flow * timeLeftAfterOpening + nextMaxValue
-                    }
-                }.maxBy { it.second }
-
         fun maxValueTagTeam(states: List<State>, toVisit: Set<String>, value: Int): Pair<Set<String>, Int> {
             if (states.isEmpty()) {
                 return toVisit to value
@@ -69,6 +39,7 @@ object Day16 : AdventDay {
             }
         }
 
+        private val timeToValveCache: MutableMap<String, Map<String, Int>> = mutableMapOf()
         private fun timeToValve(from: String): Map<String, Int> {
             return timeToValveCache.computeIfAbsent(from) {
                 val visited = mutableMapOf(from to 0)
@@ -87,17 +58,10 @@ object Day16 : AdventDay {
                 visited.filter { usefulValves.contains(it.key) }.toMap()
             }
         }
-
-        private fun valueAtTime(position: String, time: Int): Map<String, Int> =
-            timeToValve(position).mapValues { (valve, timeTo) ->
-                if (timeTo + 1 >= time) 0
-                else {
-                    this[valve].flow * (time - (timeTo + 1))
-                }
-            }
     }
 
     data class Valve(val name: String, val flow: Int, val leadsTo: List<String>)
+
     private val lineRegex = Regex("Valve ([A-Z]*) has flow rate=(\\d+); (?:tunnels lead to valves|tunnel leads to valve) (.*)")
     private fun parseInput(input: List<String>): Map<String, Valve> =
         input.associate { line ->
