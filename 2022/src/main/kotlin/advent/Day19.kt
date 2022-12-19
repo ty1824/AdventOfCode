@@ -56,20 +56,17 @@ object Day19 : AdventDay {
             )
             val resolvedStates = mutableListOf<SimulationState>()
             while (currentState.any()) {
-                val resolved = currentState.filter { it.timeRemaining == 0 }
-                resolvedStates += resolved
-                val unresolved = currentState.filter { it.timeRemaining != 0 }
-                val maxUnresolvedGeodes = unresolved.maxOfOrNull { it.resources[Geode]!! } ?: 0
+                val maxUnresolvedGeodes = currentState.maxOfOrNull { it.resources[Geode]!! } ?: 0
                 val maxResolvedGeodes = resolvedStates.maxOfOrNull { it.resources[Geode]!! } ?: 0
 //                val averageGeodes = unresolved.sumOf { it.resources[Geode]!! } / unresolved.count()
-                println("Time remaining: ${currentState.first().timeRemaining}, Possible states: ${resolved.count()} resolved / ${unresolved.count()} active, Maximum geodes: ${currentState.maxBy { it.resources[Geode]!! }.resources[Geode]!!}")
-                currentState = unresolved.filter {
-                        val maxPossibleGeodes = it.maxPossibleGeodes()
-                        maxPossibleGeodes > maxResolvedGeodes && maxPossibleGeodes > maxUnresolvedGeodes
-                    }
-                    .flatMap { it.action() }
-                    .distinct()
-                    .toList().asSequence()
+                println("Time remaining: ${currentState.first().timeRemaining}, Possible states: ${resolvedStates.count()} resolved / ${currentState.count()} active, Maximum geodes: ${currentState.maxBy { it.resources[Geode]!! }.resources[Geode]!!}")
+                val nextState = currentState.filter {
+                    val maxPossibleGeodes = it.maxPossibleGeodes()
+                    maxPossibleGeodes > max(maxResolvedGeodes, maxUnresolvedGeodes)
+                }.flatMap { it.action() }.distinct().toList().asSequence()
+
+                resolvedStates += nextState.filter { it.timeRemaining == 0}
+                currentState = nextState.filter { it.timeRemaining != 0 }.toList().asSequence()
                 // Beware Ye Hacky Optimization
                 val maxBotsPerType = Resource.values().associateWith { res -> currentState.maxOfOrNull { it.robots[res]!! } ?: 0 }
                 currentState = currentState.filter {
@@ -79,7 +76,7 @@ object Day19 : AdventDay {
                         maxBotsPerType[Clay]!! > 0 -> it.robots[Clay]!! >= maxBotsPerType[Clay]!! - 3
                         else -> true
                     }
-                }
+                }.toList().asSequence()
             }
             return resolvedStates.maxOf { it.resources[Geode]!! }
         }
