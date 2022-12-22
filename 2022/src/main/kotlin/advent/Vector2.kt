@@ -3,12 +3,12 @@ package advent
 import kotlin.math.abs
 import kotlin.math.sign
 
-val UP = 0
+val UP = 3
+val RIGHT = 0
 val DOWN = 1
 val LEFT = 2
-val RIGHT = 3
-val DIRECTIONS = intArrayOf(UP, DOWN, LEFT, RIGHT)
-val DIRECTION_VECTORS = listOf(Vector2(0, -1), Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0))
+val DIRECTIONS = intArrayOf(RIGHT, DOWN, LEFT, UP)
+val DIRECTION_VECTORS = listOf(Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0), Vector2(0, 1))
 
 data class Vector2(val x: Int = 0, val y: Int = 0)
 
