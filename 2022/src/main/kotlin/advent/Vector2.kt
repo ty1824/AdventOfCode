@@ -10,7 +10,12 @@ val LEFT = 2
 val DIRECTIONS = intArrayOf(RIGHT, DOWN, LEFT, UP)
 val DIRECTION_VECTORS = listOf(Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0), Vector2(0, 1))
 
-data class Vector2(val x: Int = 0, val y: Int = 0)
+data class Vector2(val x: Int = 0, val y: Int = 0) {
+    companion object {
+        operator fun invoke(xRange: IntRange, yRange: IntRange): List<Vector2> =
+            xRange.flatMap { x -> yRange.map { y -> Vector2(x, y) } }
+    }
+}
 
 operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, this.y + other.y)
 operator fun Vector2.minus(other: Vector2): Vector2 = Vector2(this.x - other.x, this.y - other.y)
