@@ -1,8 +1,11 @@
 package advent
 
 import advent.Day22.Direction.*
+import advent.Day22.CubeFaceKey.*
+import advent.Day22.CubeEdgeKey.*
 import advent.Day22.Rotation.Clockwise
 import advent.Day22.Rotation.Counterclockwise
+import advent.Day22.Rotation.Half
 import advent.Day22.Rotation.None
 import kotlin.math.max
 import kotlin.math.min
@@ -44,12 +47,23 @@ object Day22 : AdventDay {
     private enum class Rotation(val oppositeIndex: Int, val rotateOrientation: (Int) -> Int) {
         Counterclockwise(1, { (it + 3) % 4}),
         Clockwise(0, { (it + 1) % 4}),
-        Flip(2, { (it + 2) % 2 }),
+        Half(2, { (it + 2) % 2 }),
         None(3, { it });
 
         fun rotate(orientation: Int) = rotateOrientation(orientation)
         fun rotate(orientation: Direction) = Direction.values()[rotateOrientation(orientation.ordinal)]
         fun getOpposite(): Rotation = Rotation.values()[oppositeIndex]
+
+        companion object {
+            fun getRotation(from: Direction, to: Direction): Rotation =
+                when (((from.ordinal - to.ordinal) + 4) % 4) {
+                    0 -> None
+                    1 -> Clockwise
+                    2 -> Half
+                    3 -> Counterclockwise
+                    else -> throw RuntimeException("Invalid rotation: $from to $to")
+                }
+        }
     }
 
     private fun getRotation(from: String): Rotation = when (from) {
@@ -65,13 +79,80 @@ object Day22 : AdventDay {
     private data class CubePosition(val face: Face, val location: Vector2)
     private data class CubeState(val position: CubePosition, val orientation: Direction)
 
-    private enum class CubeFace(val edges: Map<Direction, Int>) {
-        Top(mapOf(Direction.Up to 0, Direction.Right to 1, Direction.Down to 2, Direction.Left to 3)),
-        Right(mapOf(Direction.Up to 1, Direction.Right to 4, Direction.Down to 5, Direction.Left to 9)),
-        Front(mapOf(Direction.Up to 2, Direction.Right to 5, Direction.Down to 6, Direction.Left to 10)),
-        Left(mapOf(Direction.Up to 3, Direction.Right to 6, Direction.Down to 7, Direction.Left to 11)),
-        Back(mapOf(Direction.Up to 0, Direction.Right to 7, Direction.Down to 3, Direction.Left to 8)),
-        Bottom(mapOf(Direction.Up to 8, Direction.Right to 9, Direction.Down to 10, Direction.Left to 11))
+    enum class CubeFaceKey(edges: () -> Map<Direction, CubeEdgeKey>) {
+        TopFace({
+            mapOf(
+                Up to TopBack,
+                Right to TopRight,
+                Down to TopFront,
+                Left to TopLeft
+            )
+        }),
+        RightFace({
+            mapOf(
+                Up to TopRight,
+                Right to BackRight,
+                Down to BottomRight,
+                Left to FrontRight
+            )
+        }),
+        FrontFace({
+            mapOf(
+                Up to TopFront,
+                Right to FrontRight,
+                Down to BottomFront,
+                Left to FrontLeft
+            )
+        }),
+        LeftFace({
+            mapOf(
+                Up to TopLeft,
+                Right to FrontLeft,
+                Down to BottomLeft,
+                Left to BackLeft
+            )
+        }),
+        BackFace({
+            mapOf(
+                Up to TopBack,
+                Right to BackLeft,
+                Down to BottomBack,
+                Left to BackRight
+            )
+        }),
+        BottomFace({
+            mapOf(
+                Up to BottomBack,
+                Right to BottomLeft,
+                Down to BottomFront,
+                Left to BottomRight
+            )
+        });
+
+        val edges: Map<Direction, CubeEdgeKey> = edges()
+        fun connectedFace(direction: Direction): Pair<CubeFaceKey, Direction> {
+            val edge = edges[direction]!!
+            val connectedFace = edge.connectedFace(this)
+            return connectedFace to connectedFace.edges.entries.find { it.value == edge }!!.key
+        }
+        fun edgeDirection(edge: CubeEdgeKey): Direction = this.edges.entries.find { it.value == edge }!!.key
+    }
+
+    enum class CubeEdgeKey(val first: CubeFaceKey, val second: CubeFaceKey) {
+        TopBack(TopFace, BackFace),
+        TopRight(TopFace, RightFace),
+        TopFront(TopFace, FrontFace),
+        TopLeft(TopFace, LeftFace),
+        FrontRight(FrontFace, RightFace),
+        FrontLeft(FrontFace, LeftFace),
+        BackLeft(BackFace, LeftFace),
+        BackRight(BackFace, RightFace),
+        BottomBack(BottomFace, BackFace),
+        BottomRight(BottomFace, RightFace),
+        BottomFront(BottomFace, FrontFace),
+        BottomLeft(BottomFace, LeftFace);
+
+        fun connectedFace(faceKey: CubeFaceKey): CubeFaceKey = if (this.first == faceKey) this.second else this.first
     }
 
     /**
@@ -101,7 +182,6 @@ object Day22 : AdventDay {
             }
         }
 
-
         fun move(state: CubeState, instruction: Instruction): CubeState =
             when (instruction) {
                 is Rotate -> state.copy(orientation = instruction.rotation.rotate(state.orientation))
@@ -120,7 +200,7 @@ object Day22 : AdventDay {
         private fun Vector2.isOnFace(): Boolean = this.x in 0 until dimension && this.y in 0 until dimension
     }
 
-    private enum class Direction(private val oppositeOrdinal: Int, val vector: Vector2) {
+    enum class Direction(private val oppositeOrdinal: Int, val vector: Vector2) {
         Right(2, Vector2(1, 0)),
         Down(3, Vector2(0, 1)),
         Left(0, Vector2(-1, 0)),
@@ -137,21 +217,29 @@ object Day22 : AdventDay {
     ) {
         val dimension: Int = bottomRight.x - topLeft.x
         fun edge(direction: Direction): FaceEdge = edges[direction]!!
-        private val edges: Map<Direction, FaceEdge> = values().associateWith { FaceEdge(this, it) }
+        private val edges: Map<Direction, FaceEdge> = Direction.values().associateWith { FaceEdge(this, it) }
         fun faceLocationToRawLocation(location: Vector2): Vector2 = location + topLeft
     }
 
     /**
      * Rotation represents direction shift going from first to second.
      */
-    private data class CubeEdge(val first: FaceEdge, val second: FaceEdge, val rotation: Rotation) {
+    private data class CubeEdge(val first: FaceEdge, val second: FaceEdge) {
         fun transit(origin: CubeState): CubeState {
             val currentFace = origin.position.face
             if (currentFace != first.face && currentFace != second.face)
                 throw RuntimeException("Transiting from $origin across invalid edge $this")
             val reverse = currentFace == second.face
+            val oldFaceEdge = if (reverse) first else second
             val newFaceEdge = if (reverse) second else first
-            val rotation = if (reverse) rotation.getOpposite() else rotation
+            val directions = Direction.values().size
+            val rotation = when (((newFaceEdge.side.ordinal - oldFaceEdge.side.ordinal) + directions) % directions) {
+                0 -> Half
+                1 -> Clockwise
+                2 -> None
+                3 -> Counterclockwise
+                else -> throw RuntimeException("Tried but got ")
+            }
             val newOrientation = rotation.rotate(origin.orientation)
             val leavingAt = when (origin.orientation) {
                 Left, Right -> origin.position.location.y
@@ -173,37 +261,57 @@ object Day22 : AdventDay {
      */
     private data class FaceEdge(val face: Face, val side: Direction)
 
-    private fun findConnectedFacesBeforeFold(rawFaces: List<Face>): List<Pair<FaceEdge, FaceEdge>> {
-        return rawFaces.flatMapIndexed { index, face ->
+    private fun findConnectedFacesBeforeFold(rawFaces: List<Face>): Map<Face, Map<Direction, Face>> {
+        return rawFaces.associateWith { face ->
             Direction.values().map { face.faceCoordinate + it.vector to it }
                 .mapNotNull { (coord, direction) ->
                     val otherFace = rawFaces.firstOrNull { otherFace -> otherFace.faceCoordinate == coord }
                     if (otherFace != null) {
                         otherFace to direction
                     } else null
-                }.map { (otherFace, direction) ->
-                    val otherIndex = rawFaces.indexOf(face)
-                    min(otherIndex, index) to max(otherIndex, index)
-                    FaceEdge(face, direction) to FaceEdge(otherFace, direction.opposite)
+                }.associate { (otherFace, direction) ->
+                    direction to otherFace
                 }
 
-        }.distinct()
-
+        }
     }
 
+    private data class CubeFace(val face: Face, val edgeMap: Map<CubeEdgeKey, Direction>)
     private fun foldCubeAlongEdges(rawFaces: List<Face>): List<CubeEdge> {
         val connectedFaces = findConnectedFacesBeforeFold(rawFaces)
-        val cubeFaces: MutableList<Face?> = MutableList(6) { null }
-        val cubeEdges: MutableList<CubeEdge?> = MutableList(12) { null }
-        var currentFace: List<Face> = listOf(rawFaces[0])
-        cubeFaces[0] = rawFaces[0]
-//        while (cubeFaces.contains(null)) {
-//            // Starting from the first face, fold one side in for each direction if possible
-//            Direction.values()
-//        }
+        val cubeFaces: MutableMap<CubeFaceKey, Face> = mutableMapOf()
+        val incompleteEdges: MutableMap<CubeEdgeKey, FaceEdge> = mutableMapOf()
+        val cubeEdges: MutableMap<CubeEdgeKey, CubeEdge> = mutableMapOf()
 
-        // MAGIC wtf
-        return listOf()
+        // FaceKey, Face, and the direction on the face that points towards the "up" of the FaceKey
+        var frontier: MutableList<Triple<CubeFaceKey, Face, Rotation>> = mutableListOf(Triple(TopFace, rawFaces[0], None))
+        while (frontier.isNotEmpty()) {
+            val (faceKey, face, rotation) = frontier.removeFirst()
+            cubeFaces[faceKey] = face
+            // Starting from the first face, fold one side in for each direction if possible
+            Direction.values().forEach { direction ->
+                val cubeDirection = rotation.rotate(direction)
+                val edgeKey = faceKey.edges[cubeDirection]!!
+                val edge = FaceEdge(face, direction)
+                if (!incompleteEdges.containsKey(edgeKey)) {
+                    // If we haven't seen this edge yet, add an incomplete entry with this face
+                    incompleteEdges[edgeKey] = edge
+                } else {
+                    // If we've already seen it, complete the edge.
+                    cubeEdges[edgeKey] = CubeEdge(incompleteEdges[edgeKey]!!, edge)
+                }
+                // If this is connected to another face in this direction and we haven't visited it yet
+                if (connectedFaces[face]?.containsKey(direction) == true && !cubeFaces.containsValue(face)) {
+                    val otherFace = connectedFaces[face]!![direction]!!
+                    val otherFaceKey = edgeKey.connectedFace(faceKey)
+                    val otherCubeEdgeDirection = otherFaceKey.edgeDirection(edgeKey)
+                    val faceRotation = Rotation.getRotation(otherCubeEdgeDirection, Up)
+                    frontier += Triple(otherFaceKey, otherFace, faceRotation)
+                }
+            }
+        }
+
+        return CubeEdgeKey.values().map { cubeEdges[it]!! }.toList()
     }
 
     private data class Board(
