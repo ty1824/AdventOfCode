@@ -1,6 +1,8 @@
 package advent
 
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.sign
 
 val UP = 3
@@ -23,6 +25,12 @@ operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, t
 operator fun Vector2.minus(other: Vector2): Vector2 = Vector2(this.x - other.x, this.y - other.y)
 operator fun Vector2.times(other: Vector2): Vector2 = Vector2(this.x * other.x, this.y * other.y)
 operator fun Vector2.div(other: Vector2): Vector2 = Vector2(this.x / other.x, this.y / other.y)
+operator fun Vector2.rangeTo(other: Vector2): Sequence<Sequence<Vector2>> =
+    (min(this.y, other.y)..max(this.y, other.y)).asSequence().map { y ->
+        (min(this.x, other.x)..max(this.x, other.x)).asSequence().map { x ->
+            Vector2(x, y)
+        }
+    }
 fun Vector2.linearMagnitude(): Int = this.x + this.y
 fun Vector2.abs(): Vector2 = Vector2(abs(this.x), abs(this.y))
 fun Vector2.sign(): Vector2 = Vector2(this.x.sign, this.y.sign)

@@ -1,6 +1,6 @@
 package advent
 
-import advent.Day22.Direction.*
+import advent.Direction.*
 import advent.Day22.CubeFaceKey.*
 import advent.Day22.CubeEdgeKey.*
 import advent.Day22.Rotation.*
@@ -240,15 +240,6 @@ object Day22 : AdventDay {
         }
 
         private fun Vector2.isOnFace(): Boolean = this.x in 0 until dimension && this.y in 0 until dimension
-    }
-
-    enum class Direction(private val oppositeOrdinal: Int, val vector: Vector2) {
-        Right(2, Vector2(1, 0)),
-        Down(3, Vector2(0, 1)),
-        Left(0, Vector2(-1, 0)),
-        Up(1, Vector2(0, -1));
-
-        val opposite: Direction by lazy { Direction.values()[oppositeOrdinal] }
     }
 
     private data class Face(
