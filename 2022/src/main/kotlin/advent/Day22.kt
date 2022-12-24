@@ -3,26 +3,25 @@ package advent
 import advent.Day22.Direction.*
 import advent.Day22.CubeFaceKey.*
 import advent.Day22.CubeEdgeKey.*
-import advent.Day22.Rotation.Clockwise
-import advent.Day22.Rotation.Counterclockwise
-import advent.Day22.Rotation.Half
-import advent.Day22.Rotation.None
-import kotlin.math.max
+import advent.Day22.Rotation.*
 import kotlin.math.min
 
 object Day22 : AdventDay {
     override val debugLevel: Int = 0
 
+    /**
+     * Used to run test scenarios
+     */
     fun runSample(
         tiles: List<String>,
         instLine: String,
-        init: Triple<Int, Vector2, Int> = Triple(0, Vector2(0, 0), Direction.Right.ordinal)
+        init: Triple<Int, Vector2, Int> = Triple(0, Vector2(0, 0), Right.ordinal)
     ): Triple<Int, Vector2, Int> {
         val cube = parseCube(tiles)
         val instructions = parseInstructions(instLine)
         val initialState = CubeState(CubePosition(cube.faces[init.first], init.second), Direction.values()[init.third])
         val finalState = instructions.fold(initialState) { acc, inst ->
-            debugLn(acc.toString(cube), 2)
+            debugln(acc.toString(cube), 2)
             cube.move(acc, inst)
         }
         return Triple(
@@ -34,28 +33,27 @@ object Day22 : AdventDay {
 
     override fun part1(input: List<String>): Any {
         val (board, instructions) = parseInput(input)
-        debugLn("Starting: ${board.position+1}, ${orientationToString(board.orientation)}(${board.orientation})")
+        debugln("Starting: ${board.position+1}, ${board.orientation}")
         val finalBoard = instructions.fold(board) { acc, instruction ->
             debug("Moving $instruction")
             val result = acc.move(instruction)
-            debugLn(" to ${result.position+1}, ${orientationToString(result.orientation)}(${result.orientation})")
+            debugln(" to ${result.position+1}, ${result.orientation}")
             result
         }
-        debugLn("Final position: ${finalBoard.position+1}, orientation: ${orientationToString(finalBoard.orientation)}")
+        debugln("(${finalBoard.position + 1}, ${finalBoard.orientation.ordinal})", 0)
         return (finalBoard.position + 1).let { it.x * 4 + it.y * 1000 } + finalBoard.orientation.ordinal
     }
 
     override fun part2(input: List<String>): Any {
         val (cube, instructions) = parsePartTwo(input)
         val initialState = CubeState(CubePosition(cube.faces[0], Vector2(0, 0)), Right)
-        debugLn("Executing ${instructions.size} instructions")
+        debugln("Executing ${instructions.size} instructions")
         val finalState = instructions.fold(initialState) { acc, inst ->
-            debugLn(acc.toString(cube), 2)
+            debugln(acc.toString(cube), 2)
             cube.move(acc, inst)
         }
-//        println("Moves: $successfulMoves successful, $unsuccessfulMoves unsuccessful")
-        debugLn("${cube.faces.indexOf(finalState.position.face)} ${finalState.position.location} ${finalState.orientation}(${finalState.orientation.ordinal})", 0)
         val finalPosition = finalState.position.face.faceLocationToRawLocation(finalState.position.location)
+        debugln("(${finalPosition + 1}, ${finalState.orientation.ordinal})", 0)
         return (finalPosition + 1).let { it.x * 4 + it.y * 1000 } + finalState.orientation.ordinal
     }
 
@@ -67,7 +65,6 @@ object Day22 : AdventDay {
         Down -> "down"
         Left -> "left"
         Up -> "up"
-        else -> "ASDFSADFSAAFA"
     }
 
     private enum class Rotation(val oppositeIndex: Int, val rotateOrientation: (Int) -> Int) {
@@ -76,9 +73,7 @@ object Day22 : AdventDay {
         Half(2, { (it + 2) % 4 }),
         None(3, { it });
 
-        fun rotate(orientation: Int) = rotateOrientation(orientation)
         fun rotate(orientation: Direction) = Direction.values()[rotateOrientation(orientation.ordinal)]
-        fun getOpposite(): Rotation = Rotation.values()[oppositeIndex]
 
         companion object {
             fun getRotation(from: Direction, to: Direction): Rotation =
@@ -185,9 +180,6 @@ object Day22 : AdventDay {
         fun connectedFace(faceKey: CubeFaceKey): CubeFaceKey = if (this.first == faceKey) this.second else this.first
     }
 
-    var successfulMoves = 0
-    var unsuccessfulMoves = 0
-
     /**
      * Faces are as follows:
      * 0 -> Top
@@ -206,41 +198,45 @@ object Day22 : AdventDay {
 
         fun candidateMove(state: CubeState): CubeState {
             val position = state.position.location + state.orientation.vector
-            debugLn("  Pos: $position, is on face: ${position.isOnFace()}", 2)
+            debugln("  Pos: $position, is on face: ${position.isOnFace()}", 2)
             return if (position.isOnFace()) {
                 CubeState(CubePosition(state.position.face, position), state.orientation)
             } else {
                 val currentFace = state.position.face
                 val edge = edgeFor(currentFace.edge(state.orientation))
                 val result = edge.transit(state)
-                debugLn("  --> Transit from ${state.toString(this)} to ${result.toString(this)}", 2)
+                debugln("  --> Transit from ${state.toString(this)} to ${result.toString(this)}", 2)
                 result
             }
         }
 
         fun move(state: CubeState, instruction: Instruction): CubeState {
-            debugLn("Executing instruction: $instruction", 2)
+            debugln("Executing instruction: $instruction", 2)
             return when (instruction) {
                 is Rotate -> {
                     val orientation = instruction.rotation.rotate(state.orientation)
-                    debugLn("  new orientation: $orientation", 2)
-                    state.copy(orientation = orientation)
+                    debugln("  new orientation: $orientation", 2)
+                    val newState = state.copy(orientation = orientation)
+                    newState
                 }
                 is Move -> {
                     var currentState = state
                     repeat(instruction.distance) {
                         val candidate = candidateMove(currentState)
-                        debugLn("  Can move: ${!candidate.position.face.tiles[candidate.position.location]!!}", 2)
+                        debugln("  Can move: ${!candidate.position.face.tiles[candidate.position.location]!!}", 2)
                         if (!candidate.position.face.tiles[candidate.position.location]!!) {
-                            successfulMoves++
                             currentState = candidate
-                        } else {
-                            unsuccessfulMoves++
                         }
                     }
                     currentState
                 }
             }
+        }
+
+        fun stateToString(state: CubeState): String {
+            val loc = state.position.face.faceLocationToRawLocation(state.position.location)
+            val orientation = state.orientation.ordinal
+            return "((${loc.x}, ${loc.y}), $orientation)}"
         }
 
         private fun Vector2.isOnFace(): Boolean = this.x in 0 until dimension && this.y in 0 until dimension
@@ -336,12 +332,12 @@ object Day22 : AdventDay {
         val frontier: MutableList<Triple<CubeFaceKey, Face, Rotation>> = mutableListOf(Triple(TopFace, rawFaces[0], None))
         while (frontier.isNotEmpty()) {
             val (faceKey, face, rotation) = frontier.removeFirst()
-//            debugLn("Resolving face $faceKey with rotation $rotation")
+            debugln("Resolving face $faceKey with rotation $rotation", 2)
             cubeFaces[faceKey] = face to rotation
             // Starting from the first face, fold one side in for each direction if possible
             Direction.values().forEach { direction ->
                 val cubeDirection = rotation.rotate(direction)
-//                debugLn("  Direction: $direction (actual: $cubeDirection)")
+                debugln("  Direction: $direction (actual: $cubeDirection)", 2)
                 val edgeKey = faceKey.edges[cubeDirection]!!
                 val edge = FaceEdge(face, direction)
                 if (!incompleteEdges.containsKey(edgeKey)) {
@@ -357,22 +353,23 @@ object Day22 : AdventDay {
                 if (otherFace != null && !seen.contains(otherFace)) {
                     val otherFaceKey = edgeKey.connectedFace(faceKey)
                     val otherCubeEdgeDirection = otherFaceKey.edgeDirection(edgeKey)
-                    val faceRotation = Rotation.getRotation(otherCubeEdgeDirection, cubeDirection.opposite)
-//                    debugLn("    Edge $edgeKey moves from $faceKey to $otherFaceKey")
-//                    debugLn("    Adding face $otherFaceKey, $faceRotation")
+                    // Rotation between the cube's edge direction and the actual face's edge direction
+                    val faceRotation = Rotation.getRotation(otherCubeEdgeDirection, direction.opposite)
+                    debugln("    Edge $edgeKey moves from $faceKey to $otherFaceKey", 1)
+                    debugln("    Adding face $otherFaceKey, $faceRotation", 1)
                     frontier += Triple(otherFaceKey, otherFace, faceRotation)
                     seen += otherFace
                 }
             }
         }
 
-        debugLn("Sides")
+        debugln("Sides")
         cubeFaces.forEach { (key, value) ->
-            debugLn("  $key: ${rawFaces.indexOf(value.first)}@${value.second}")
+            debugln("  $key: ${rawFaces.indexOf(value.first)}@${value.second}")
         }
-        debugLn("Edges ${cubeEdges.size}")
+        debugln("Edges ${cubeEdges.size}")
         cubeEdges.forEach { (key, value) ->
-            debugLn("  $key: (${rawFaces.indexOf(value.first.face)}@${value.first.side}), (${rawFaces.indexOf(value.second.face)}@${value.second.side})")
+            debugln("  $key: (${rawFaces.indexOf(value.first.face)}@${value.first.side}), (${rawFaces.indexOf(value.second.face)}@${value.second.side})")
         }
         return CubeEdgeKey.values().map { cubeEdges[it]!! }.toList()
     }
@@ -388,29 +385,27 @@ object Day22 : AdventDay {
             when (instruction) {
                 is Move -> {
                     for (i in 1..instruction.distance) {
-                        resultingPosition =
-                            (resultingPosition + orientation.vector)
-                                .let { vec: Vector2 ->
-                                    val (realVec, tile) = if (tiles.containsKey(vec)) {
-                                        vec to tiles[vec]
-                                    } else {
-                                        val wrapped = when (orientation) {
-                                            Left -> Vector2(getLastInRow(vec.y), vec.y)
-                                            Right -> Vector2(getFirstInRow(vec.y), vec.y)
-                                            Down -> Vector2(vec.x, getFirstInColumn(vec.x))
-                                            Up -> Vector2(vec.x, getLastInColumn(vec.x))
-                                            else -> throw RuntimeException("Invalid orientation: $orientation")
-                                        }
-                                        wrapped to tiles[wrapped]
-                                    }
-                                    if (tile == null) {
-                                        throw RuntimeException("Null tile wtf")
-                                    } else if (tile) {
-                                        resultingPosition
-                                    } else {
-                                        realVec
-                                    }
+                        resultingPosition = (resultingPosition + orientation.vector).let { vec: Vector2 ->
+                            val (realVec, tile) = if (tiles.containsKey(vec)) {
+                                vec to tiles[vec]
+                            } else {
+                                val wrapped = when (orientation) {
+                                    Left -> Vector2(getLastInRow(vec.y), vec.y)
+                                    Right -> Vector2(getFirstInRow(vec.y), vec.y)
+                                    Down -> Vector2(vec.x, getFirstInColumn(vec.x))
+                                    Up -> Vector2(vec.x, getLastInColumn(vec.x))
+                                    else -> throw RuntimeException("Invalid orientation: $orientation")
                                 }
+                                wrapped to tiles[wrapped]
+                            }
+                            if (tile == null) {
+                                throw RuntimeException("Shouldn't be possible, we have a null tile")
+                            } else if (tile) {
+                                resultingPosition
+                            } else {
+                                realVec
+                            }
+                        }
                     }
                     return this.copy(position = resultingPosition)
                 }
@@ -463,7 +458,6 @@ object Day22 : AdventDay {
     private val whitespaceRegex = Regex("\\s+")
     private fun parseCube(tileInput: List<String>): Cube {
         val gridWidth = tileInput.maxOf { it.length }
-        val gridHeight = tileInput.size
         val minWidth: Int = tileInput.minOf {
             it.split(whitespaceRegex)
                 .filter(String::isNotBlank)
@@ -483,7 +477,7 @@ object Day22 : AdventDay {
                 .minOf(String::length)
         }
         val minDimension = min(minWidth, minHeight)
-        debugLn("$minWidth $minHeight $minDimension")
+        debugln("$minWidth $minHeight $minDimension")
         val dimensionVector = Vector2(minDimension, minDimension)
         // Chunk into squares along X/Y
         val faces: List<Face> = tileInput
@@ -513,17 +507,17 @@ object Day22 : AdventDay {
                 }
             }.toList()
 
-        debugLn("FACES")
+        debugln("FACES")
         faces.map { Triple(it.topLeft, it.tiles.size, it.tiles) }.forEach {
-            debugLn(it.first to it.second)
+            debugln(it.first to it.second)
             (0 until minDimension).forEach { y ->
                 (0 until minDimension).forEach { x ->
                     debug(it.third[Vector2(x, y)].let { if (it == true) '#' else '.' })
                 }
-                debugLn()
+                debugln()
             }
         }
-        debugLn("ENDFACES")
+        debugln("ENDFACES")
         return Cube(faces)
     }
     private fun parsePartTwo(input: List<String>): Pair<Cube, List<Instruction>> {
