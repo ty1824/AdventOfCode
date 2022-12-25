@@ -9,7 +9,7 @@ object Day19 : AdventDay {
         val results = blueprints.map {
             it.simulateOptimalGeodes(24)
         }
-        println(results)
+        debugln(results)
         return results.mapIndexed { index, value -> (index + 1) * value }.sum()
     }
 
@@ -18,7 +18,7 @@ object Day19 : AdventDay {
         val results = blueprints.map {
             it.simulateOptimalGeodes(32)
         }
-        println(results)
+        debugln(results)
         return results.reduce(Int::times)
     }
 

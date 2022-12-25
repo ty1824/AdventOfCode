@@ -1,5 +1,6 @@
 package advent
 
+import advent.Direction.*
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -15,11 +16,11 @@ object Day8 : AdventDay {
     class Trees(private val grid: IntGrid) {
         private val larger: Array<IntArray> = Array(grid.size) { IntArray(4) { -1 } }
 
-        private fun getSameOrLargerTreeInDirection(location: Vector2, direction: Int): Int {
+        private fun getSameOrLargerTreeInDirection(location: Vector2, direction: Direction): Int {
             val index = grid.locationToIndex(location)
-            if (larger[index][direction] < 0) {
+            if (larger[index][direction.ordinal] < 0) {
                 val thisSize = grid[index]
-                var neighbor = location + direction
+                var neighbor = location + direction.vector
                 var result = index
                 while (grid.isOnGrid(neighbor) && result == index) {
                     val neighborIndex = grid.locationToIndex(neighbor)
@@ -36,17 +37,17 @@ object Day8 : AdventDay {
                             neighbor = grid.indexToLocation(neighborLarger)
                     }
                 }
-                larger[index][direction] = result
+                larger[index][direction.ordinal] = result
             }
-            return larger[index][direction]
+            return larger[index][direction.ordinal]
         }
 
-        private fun isLocationVisibleFrom(location: Vector2, direction: Int): Boolean {
+        private fun isLocationVisibleFrom(location: Vector2, direction: Direction): Boolean {
             return getSameOrLargerTreeInDirection(location, direction) == grid.locationToIndex(location)
         }
 
         private fun isLocationVisible(location: Vector2): Boolean {
-            return DIRECTIONS.any { direction -> isLocationVisibleFrom(location, direction) }
+            return Direction.values().any { direction -> isLocationVisibleFrom(location, direction) }
         }
 
         fun getVisibleLocations(): List<Vector2> =
@@ -54,23 +55,23 @@ object Day8 : AdventDay {
                 .filter { isLocationVisible(it) }
 
         private fun getLargerTrees(location: Vector2): List<Vector2> =
-            DIRECTIONS.map { direction -> grid.indexToLocation(getSameOrLargerTreeInDirection(location, direction)) }
+            Directions.map { direction -> grid.indexToLocation(getSameOrLargerTreeInDirection(location, direction)) }
 
-        private fun getTreesInDirection(location: Vector2, direction: Int): Int {
-            return grid.locationToIndex(location + DIRECTION_VECTORS[direction])
-        }
-
-        private fun getDirectionalDistance(location: Vector2, otherLocation: Vector2, direction: Int): Int {
-            return when (direction) {
-                UP, DOWN -> abs(otherLocation.y - location.y)
-                LEFT, RIGHT -> abs(otherLocation.x - location.x)
-                else -> throw RuntimeException("Bad direction: $direction")
+        private fun getTreesInDirection(location: Vector2, direction: Direction): Int =
+            when (direction) {
+                Up -> location.y
+                Down -> grid.height - location.y - 1
+                Left -> location.x
+                Right -> grid.width - location.x - 1
             }
-        }
+
+        private fun getDirectionalDistance(location: Vector2, otherLocation: Vector2, direction: Direction): Int =
+            ((otherLocation - location) * direction.vector).abs().linearMagnitude()
 
         private fun getScenicScore(location: Vector2): Int {
             val index = grid.locationToIndex(location)
-            return getLargerTrees(location).mapIndexed { direction, otherLocation ->
+            return getLargerTrees(location).mapIndexed { directionOrdinal, otherLocation ->
+                val direction = Direction.values()[directionOrdinal]
                 if (grid.locationToIndex(otherLocation) == index)
                     // We are the tallest tree and thus can see to the edge
                     getTreesInDirection(location, direction)
@@ -80,12 +81,8 @@ object Day8 : AdventDay {
             }.reduce(Int::times)
         }
 
-        fun getLargestScenicScore(): Int {
-            val maxLocation = grid.elements.mapIndexed { index, _ -> grid.indexToLocation(index) }.maxBy { getScenicScore(it) }
-            return getScenicScore(maxLocation)
-        }
-
-        private fun Vector2.getNeighboringLocation(direction: Int) = this + DIRECTION_VECTORS[direction]
+        fun getLargestScenicScore(): Int =
+            grid.elements.mapIndexed { index, _ -> grid.indexToLocation(index) }.maxOf(this::getScenicScore)
     }
 
     private fun parseGrid(input: List<String>): Trees =

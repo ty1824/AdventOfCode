@@ -7,8 +7,6 @@ import advent.Day22.Rotation.*
 import kotlin.math.min
 
 object Day22 : AdventDay {
-    override val debugLevel: Int = 0
-
     /**
      * Used to run test scenarios
      */
@@ -40,7 +38,7 @@ object Day22 : AdventDay {
             debugln(" to ${result.position+1}, ${result.orientation}")
             result
         }
-        debugln("(${finalBoard.position + 1}, ${finalBoard.orientation.ordinal})", 0)
+        debugln("(${finalBoard.position + 1}, ${finalBoard.orientation.ordinal})", 1)
         return (finalBoard.position + 1).let { it.x * 4 + it.y * 1000 } + finalBoard.orientation.ordinal
     }
 
@@ -53,7 +51,7 @@ object Day22 : AdventDay {
             cube.move(acc, inst)
         }
         val finalPosition = finalState.position.face.faceLocationToRawLocation(finalState.position.location)
-        debugln("(${finalPosition + 1}, ${finalState.orientation.ordinal})", 0)
+        debugln("(${finalPosition + 1}, ${finalState.orientation.ordinal})", 1)
         return (finalPosition + 1).let { it.x * 4 + it.y * 1000 } + finalState.orientation.ordinal
     }
 

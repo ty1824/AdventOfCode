@@ -51,7 +51,7 @@ object Day12 : AdventDay {
 
         fun getTraversableLocations(location: Vector2): Iterable<Vector2> {
             val from = heightAt(location)
-            return DIRECTION_VECTORS.map(location::plus)
+            return Directions.vectors.map(location::plus)
                 .filter {
                     grid.isOnGrid(it) && from.canTraverseToHeight(heightAt(it))
                 }
@@ -59,7 +59,7 @@ object Day12 : AdventDay {
 
         fun getLocationsTraversableTo(location: Vector2): Iterable<Vector2> {
             val from = heightAt(location)
-            return DIRECTION_VECTORS.map(location::plus)
+            return Directions.vectors.map(location::plus)
                 .filter {
                     grid.isOnGrid(it) && heightAt(it).canTraverseToHeight(from)
                 }

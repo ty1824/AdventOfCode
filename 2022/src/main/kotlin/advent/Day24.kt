@@ -81,7 +81,7 @@ object Day24 : AdventDay {
         val destinations = lastState.destinations
         return if (destinations.isEmpty()) {
             // We've found a solution
-            println("Candidate found: ${states.last().time}")
+            debugln("Candidate found: ${states.last().time}")
             states
         } else {
             val nextMap = getMapAtTime(lastState.time + 1)

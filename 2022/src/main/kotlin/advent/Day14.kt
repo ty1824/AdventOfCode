@@ -21,7 +21,7 @@ object Day14 : AdventDay {
     override fun part2(input: List<String>): Any {
         val (grid, dimensions) = parseGrid(input, true)
         var count = 0
-        println(printGrid(grid))
+        debugln(printGrid(grid))
         while (dropSand(grid, dimensions)) {
             count++
         }

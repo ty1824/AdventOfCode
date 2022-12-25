@@ -5,13 +5,6 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sign
 
-val UP = 3
-val RIGHT = 0
-val DOWN = 1
-val LEFT = 2
-val DIRECTIONS = intArrayOf(RIGHT, DOWN, LEFT, UP)
-val DIRECTION_VECTORS = listOf(Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0), Vector2(0, 1))
-
 data class Vector2(val x: Int = 0, val y: Int = 0) {
     companion object {
         operator fun invoke(xRange: IntRange, yRange: IntRange): List<Vector2> =

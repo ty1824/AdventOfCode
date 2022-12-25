@@ -7,7 +7,7 @@ object Day23 : AdventDay {
         repeat(10) {
             map = map.stepRound().first
         }
-        println(map.mapString())
+        debugln(map.mapString())
         val dimensions = map.dimensions() + 1
         return dimensions.x * dimensions.y - map.elfLocations.size
     }
