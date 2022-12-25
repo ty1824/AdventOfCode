@@ -9,12 +9,12 @@ object Day14 : AdventDay {
     override fun part1(input: List<String>): Any {
         val (grid, dimensions) = parseGrid(input, false)
         var count = 0
-        println(printGrid(grid))
+        debugln(printGrid(grid))
         while (dropSand(grid, dimensions)) {
             count++
         }
-        println("/".repeat(60))
-        println(printGrid(grid))
+        debugln("/".repeat(60))
+        debugln(printGrid(grid))
         return count
     }
 
@@ -23,11 +23,10 @@ object Day14 : AdventDay {
         var count = 0
         println(printGrid(grid))
         while (dropSand(grid, dimensions)) {
-//            println(printGrid(grid))
             count++
         }
-        println("/".repeat(60))
-        println(printGrid(grid))
+        debugln("/".repeat(60))
+        debugln(printGrid(grid))
         return count
     }
 

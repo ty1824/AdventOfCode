@@ -59,7 +59,7 @@ object Day19 : AdventDay {
                 val maxUnresolvedGeodes = currentState.maxOfOrNull { it.resources[Geode]!! } ?: 0
                 val maxResolvedGeodes = resolvedStates.maxOfOrNull { it.resources[Geode]!! } ?: 0
 //                val averageGeodes = unresolved.sumOf { it.resources[Geode]!! } / unresolved.count()
-                println("Time remaining: ${currentState.first().timeRemaining}, Possible states: ${resolvedStates.count()} resolved / ${currentState.count()} active, Maximum geodes: ${currentState.maxBy { it.resources[Geode]!! }.resources[Geode]!!}")
+                debugln("Time remaining: ${currentState.first().timeRemaining}, Possible states: ${resolvedStates.count()} resolved / ${currentState.count()} active, Maximum geodes: ${currentState.maxBy { it.resources[Geode]!! }.resources[Geode]!!}")
                 val nextState = currentState.filter {
                     val maxPossibleGeodes = it.maxPossibleGeodes()
                     maxPossibleGeodes > max(maxResolvedGeodes, maxUnresolvedGeodes)

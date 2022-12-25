@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package advent
 
 import java.io.File
@@ -6,14 +8,24 @@ import kotlin.time.measureTime
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
-        (1..25).forEach { runDay(it) }
+        val totalTime = measureTime {
+            (1..25).forEach {
+                if (it != 8) runDay(it)
+                println()
+            }
+        }
+        println("Total time to run all days: ${totalTime.inWholeMilliseconds}ms")
+    } else {
+        val day = args[0].toInt()
+        val filepath = if (args.size > 1) {
+            args[1]
+        } else {
+            "day${day}.txt"
+        }
+        runDay(day, filepath)
     }
-    val day = args[0].toInt()
-    val filepath = if (args.size > 1) { args[1] } else { "day${day}.txt" }
-    runDay(day, filepath)
 }
 
-@OptIn(ExperimentalTime::class)
 fun runDay(day: Int, inputPath: String = "day$day.txt") {
     println("Running day $day on input $inputPath")
     val inputFile = File(AdventDay::class.java.getResource(inputPath)!!.toURI())

@@ -1,8 +1,12 @@
 package advent
 
 sealed interface AdventDay {
+    companion object {
+        var globalDebugLevel = 0
+    }
+
     val debugLevel: Int
-        get() = 0
+        get() = globalDebugLevel
 
     fun part1(input: List<String>): Any
 
