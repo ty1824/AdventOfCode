@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
             }
         }
         times.forEachIndexed { index, time ->
-            println("  Day ${index + 1}: ${time.toString(DurationUnit.MILLISECONDS, 1)}")
+            println("  Day ${index + 1}: ${time.toString(DurationUnit.SECONDS, 3)}")
         }
         println("Total time to run all days: ${totalTime.toString(DurationUnit.SECONDS, 3)}")
     } else {

@@ -1,59 +1,74 @@
 package advent
 
+import kotlin.math.max
+
 object Day16 : AdventDay {
     override fun part1(input: List<String>): Any {
         val valves = ValveMap(parseInput(input))
-        return valves.maxValueTagTeam(listOf(State("AA", 30)), valves.usefulValves - "AA", 0)
+        return valves.maxValueDfs(listOf(ValvePosition("AA", 30)))
     }
 
     override fun part2(input: List<String>): Any {
         val valves = ValveMap(parseInput(input))
-        return valves.maxValueTagTeam(listOf(State("AA", 26), State("AA", 26)), valves.usefulValves - "AA", 0)
+        return valves.maxValueDfs(listOf(ValvePosition("AA", 26), ValvePosition("AA", 26)))
     }
 
-    data class State(val position: String, val timeRemaining: Int)
+    data class ValvePosition(val valve: String, val timeRemaining: Int)
     class ValveMap(val map: Map<String, Valve>) {
         val usefulValves: Set<String> = map.filter { it.value.flow != 0 }.keys
         operator fun get(key: String): Valve = map[key]!!
 
-        fun maxValueTagTeam(states: List<State>, toVisit: Set<String>, value: Int): Pair<Set<String>, Int> {
-            if (states.isEmpty()) {
-                return toVisit to value
+        fun maxValueAt(position: ValvePosition, toVisit: Iterable<String>): Int {
+            val timeTo = timeToValve(position.valve)
+            return toVisit.sumOf { max(get(it).flow * (position.timeRemaining - timeTo[it]!!), 0) }
+        }
+
+        data class DfsSearchState(val currentValves: List<ValvePosition>, val totalPressure: Int, val toVisit: Set<String>, val previous: DfsSearchState?)
+        fun maxValueDfs(startingFrom: List<ValvePosition>): Int {
+            var currentMaxCandidate = DfsSearchState(listOf(), 0, setOf(), null)
+            depthFirstSearch(DfsSearchState(startingFrom, 0, usefulValves, null)) { state ->
+                if (state.currentValves.isEmpty()) {
+                    if (state.totalPressure > currentMaxCandidate.totalPressure) {
+                        debugln("Candidate found: ${state.totalPressure}")
+                        currentMaxCandidate = state
+                    }
+                    listOf()
+                } else {
+                    val max = state.currentValves.first()
+                    val remainder = state.currentValves.drop(1)
+                    timeToValve(max.valve).asSequence()
+                        .filter { (valve, timeTo) -> // Only keep valves that we can reach in time
+                            state.toVisit.contains(valve) && timeTo < max.timeRemaining
+                        }.map { (valve, timeTo) -> // Convert to next state
+                            val newPosition = ValvePosition(valve, max.timeRemaining - timeTo)
+                            val newPositionsSorted = (remainder + newPosition).sortedByDescending { it.timeRemaining }
+                            val newTotalPressure = state.totalPressure + this[valve].flow * newPosition.timeRemaining
+                            val newToVisit = state.toVisit - newPosition.valve
+                            val maxVals: Int = newPositionsSorted.sumOf {
+                                maxValueAt(it, newToVisit)
+                            }
+                            DfsSearchState(newPositionsSorted, newTotalPressure, newToVisit, state) to maxVals
+                        }.filter { (newState, maxPressure) -> // Filter out states that can not beat the current best
+                            newState.totalPressure + maxPressure > currentMaxCandidate.totalPressure
+                        }.map { it.first }
+                        .ifEmpty { sequenceOf(DfsSearchState(remainder, state.totalPressure, state.toVisit, state)) }
+                        .toList()
+                }
             }
-            val max = states.first()
-            val remainder = states.drop(1)
-            val possibleValves = timeToValve(max.position).filter { (valve, timeTo) ->
-                toVisit.contains(valve) && timeTo + 1 < max.timeRemaining
-            }
-            return if (possibleValves.isNotEmpty()) {
-                possibleValves.map { (valve, timeTo) ->
-                    if (timeTo + 1 >= max.timeRemaining)
-                        maxValueTagTeam(remainder, toVisit, value)
-                    val newStateAfterOpening = State(valve, max.timeRemaining - (timeTo + 1))
-                    val newStates = (remainder + newStateAfterOpening).sortedByDescending { it.timeRemaining }
-                    val newValue = value + this[valve].flow * newStateAfterOpening.timeRemaining
-                    maxValueTagTeam(newStates, toVisit - valve, newValue)
-                }.maxBy { it.second }
-            } else {
-                return maxValueTagTeam(remainder, toVisit, value)
-            }
+            return currentMaxCandidate.totalPressure
         }
 
         private val timeToValveCache: MutableMap<String, Map<String, Int>> = mutableMapOf()
         private fun timeToValve(from: String): Map<String, Int> {
             return timeToValveCache.computeIfAbsent(from) {
                 val visited = mutableMapOf(from to 0)
-                var frontier = listOf(from)
-                var time = 0
-                while (frontier.any()) {
-                    time++
-                    val nextFrontier =
-                        frontier.flatMap { this[it].leadsTo }
-                            .distinct()
-                            .filter { !visited.containsKey(it) }
-                            .toList()
-                    nextFrontier.forEach { visited[it] = time }
-                    frontier = nextFrontier
+                var time = 1
+                breadthFirstSearch(listOf(from), beforeIteration = { time++ }) { valve ->
+                    val nextValves = this[valve].leadsTo.filter { nextValve -> !visited.containsKey(nextValve) }
+                    nextValves.forEach { nextValve ->
+                        visited[nextValve] = time
+                    }
+                    nextValves
                 }
                 visited.filter { usefulValves.contains(it.key) }.toMap()
             }

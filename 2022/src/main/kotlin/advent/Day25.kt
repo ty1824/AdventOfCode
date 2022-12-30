@@ -6,15 +6,12 @@ import kotlin.math.pow
 object Day25 : AdventDay {
     override fun part1(input: List<String>): Any {
         val result = input.sumOf { snafuToLong(it) }
-        println(result)
         return longToSnafu(result)
     }
 
     override fun part2(input: List<String>): Any {
         return "Congratulations, there is no part 2"
     }
-
-
 
     fun snafuToLong(snafu: String): Long =
         (0..snafu.lastIndex).fold(0) { acc, index ->
