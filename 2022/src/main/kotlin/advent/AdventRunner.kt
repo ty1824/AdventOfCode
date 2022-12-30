@@ -8,6 +8,14 @@ import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+/**
+ * Accepts 0, 1 or 2 arguments.
+ *
+ * 0 arguments -> Runs all 25 days
+ * 1 argument -> Must be an integer from 1 to 25. Runs the specified day against the default input file.
+ * 2 arguments -> First must be an integer from 1 to 25, the second must be a filepath within resources.
+ *                Runs the specified day against the specified input file.
+ */
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
         val times = mutableListOf<Duration>()
