@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/KotlinShared" name="KotlinShared">
+                <projects>
+                  <project path="$PROJECT_DIR$/KotlinShared" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/2022" name="2022">
+                <projects>
+                  <project path="$PROJECT_DIR$/2022" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/2023" name="2023">
+                <projects>
+                  <project path="$PROJECT_DIR$/2023" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="distributionType" value="DEFAULT_WRAPPED" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="corretto-16" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/2022" />
+            <option value="$PROJECT_DIR$/2023" />
+            <option value="$PROJECT_DIR$/KotlinShared" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>
