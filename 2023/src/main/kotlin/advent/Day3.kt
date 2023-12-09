@@ -6,7 +6,6 @@ object Day3 : AdventDay {
         val numbers = input.flatMapIndexed(::lineToNumbers)
         return numbers.sumOf { num ->
             if (num.location.any { loc -> grid.anyAdjacent(loc) { it < 0 } }) {
-                println(num.value)
                 num.value
             } else {
                 0

@@ -21,8 +21,10 @@ fun main(args: Array<String>) {
         val times = mutableListOf<Duration>()
         val totalTime = measureTime {
             (1..25).forEach {
-                times += runDay(it)
-                println()
+                runDay(it)?.let { time ->
+                    times += time
+                    println()
+                }
             }
         }
         times.forEachIndexed { index, time ->
@@ -40,24 +42,29 @@ fun main(args: Array<String>) {
     }
 }
 
-fun runDay(day: Int, inputPath: String = "day$day.txt"): Duration {
-    println("Running day $day on input $inputPath")
-    val inputFile = File(AdventDay::class.java.getResource(inputPath)!!.toURI())
-    val input = inputFile.readLines()
-    val solutionRunner = AdventDay::class.sealedSubclasses.first {
+fun runDay(day: Int, inputPath: String = "day$day.txt"): Duration? {
+    val solutionRunner = AdventDay::class.sealedSubclasses.firstOrNull {
         it.simpleName == "Day${day}"
-    }.objectInstance!!
+    }?.objectInstance
+    if (solutionRunner != null) {
+        println("Running day $day on input $inputPath")
+        val inputFile = File(AdventDay::class.java.getResource(inputPath)!!.toURI())
+        val input = inputFile.readLines()
 
-    println("Part 1:")
-    val part1Time = measureTime {
-        println(solutionRunner.part1(input))
+
+        println("Part 1:")
+        val part1Time = measureTime {
+            println(solutionRunner.part1(input))
+        }
+        println("time: ${part1Time.toString(DurationUnit.MILLISECONDS, 1)}")
+        println()
+        println("Part 2:")
+        val part2Time = measureTime {
+            println(solutionRunner.part2(input))
+        }
+        println("time: ${part2Time.toString(DurationUnit.MILLISECONDS, 1)}")
+        return part1Time + part2Time
+    } else {
+        return null
     }
-    println("time: ${part1Time.toString(DurationUnit.MILLISECONDS, 1)}")
-    println()
-    println("Part 2:")
-    val part2Time = measureTime {
-        println(solutionRunner.part2(input))
-    }
-    println("time: ${part2Time.toString(DurationUnit.MILLISECONDS, 1)}")
-    return part1Time + part2Time
 }

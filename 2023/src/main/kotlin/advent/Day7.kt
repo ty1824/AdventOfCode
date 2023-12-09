@@ -5,7 +5,6 @@ import java.lang.Integer.max
 object Day7 : AdventDay {
     override fun part1(input: List<String>): Any {
         val sorted = parseInput(input).sorted()
-        println(sorted.joinToString("\n"))
         return sorted.foldIndexed(0) { index, accum, hand ->
             hand.bid * (index + 1) + accum
         }
@@ -13,7 +12,6 @@ object Day7 : AdventDay {
 
     override fun part2(input: List<String>): Any {
         val sorted = parseInput(input).map { JokerHand(it) }.sorted()
-        println(sorted.joinToString("\n"))
         return sorted.foldIndexed(0) { index, accum, hand ->
             hand.bid * (index + 1) + accum
         }
