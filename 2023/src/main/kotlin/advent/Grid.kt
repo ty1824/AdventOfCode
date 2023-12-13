@@ -25,6 +25,19 @@ interface Grid<T> {
 
     fun indexToLocation(index: Int): Vector2 = Vector2((index % width), (index / width))
 
+    fun getRow(row: Int): Sequence<T> = sequence {
+        val offset = row * width
+        for (x in 0 until width) {
+            yield(get(offset + x))
+        }
+    }
+
+    fun getColumn(column: Int): Sequence<T> = sequence {
+        for (y in 0 until height) {
+            yield(get(y * width + column))
+        }
+    }
+
     fun getRows(): Sequence<Sequence<T>> = sequence {
         var el = 0
         for (y in 0 until height) {
