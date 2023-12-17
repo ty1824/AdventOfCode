@@ -73,7 +73,7 @@ object Day16 : AdventDay {
     fun followBeam(loc: Vector2, initialDirection: Direction, grid: IntGrid, mirrors: Map<Vector2, Mirror>): Set<Vector2> {
         val energized: MutableSet<Vector2> = mutableSetOf(loc)
         val mirrorPaths: MutableSet<Pair<Vector2, Direction>> = mutableSetOf()
-        depthFirstSearch(loc to initialDirection) { (loc, direction) ->
+        depthFirstSearch(listOf(loc to initialDirection)) { (loc, direction) ->
             val mirrorLoc = grid.firstInDirection(loc, direction, true) {
                 mirrors[it]?.let { it.traverse(direction) != null } ?: false
             }

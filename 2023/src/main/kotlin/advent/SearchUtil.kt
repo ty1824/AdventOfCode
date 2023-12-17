@@ -1,14 +1,24 @@
 package advent
 
-import java.util.LinkedList
-
 fun <S> depthFirstSearch(
-    initialSearchState: S,
+    initialSearchState: List<S>,
     search: (S) -> List<S>?
 ) {
-    val toVisit: MutableList<S> = mutableListOf(initialSearchState)
+    val toVisit: MutableList<S> = initialSearchState.toMutableList()
     while (toVisit.isNotEmpty()) {
         toVisit += search(toVisit.removeLast())?.reversed() ?: return
+    }
+}
+
+fun <S> lowestFirstSearch(
+    initialSearchState: List<S>,
+    comparator: Comparator<S>,
+    search: (S) -> List<S>?
+) {
+    val toVisit: MutableList<S> = initialSearchState.toMutableList()
+    while (toVisit.isNotEmpty()) {
+        toVisit += search(toVisit.removeLast())?.reversed() ?: return
+        toVisit.sortWith(comparator)
     }
 }
 

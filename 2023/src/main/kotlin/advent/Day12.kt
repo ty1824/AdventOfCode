@@ -112,7 +112,7 @@ object Day12 : AdventDay {
         println(condition.state)
         val configurations: MutableList<String> = mutableListOf()
 
-        depthFirstSearch(condition.state) {
+        depthFirstSearch(listOf(condition.state)) {
             when {
                 it.indexOf('?') == -1 -> {
                     // No more missing data, submit string if it's valid
