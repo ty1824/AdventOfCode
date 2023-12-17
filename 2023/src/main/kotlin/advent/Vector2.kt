@@ -8,8 +8,9 @@ import kotlin.math.sign
 data class Vector2(val x: Int = 0, val y: Int = 0) {
     companion object {
         val zero = Vector2()
-        operator fun invoke(xRange: IntRange, yRange: IntRange): List<Vector2> =
-            xRange.flatMap { x -> yRange.map { y -> Vector2(x, y) } }
+        operator fun invoke(xRange: IntRange, yRange: IntRange): Sequence<Vector2> = sequence {
+            xRange.forEach { x -> yRange.forEach { y -> yield(Vector2(x, y)) } }
+        }
     }
 
     override fun toString(): String = "($x, $y)"
@@ -19,10 +20,16 @@ operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, t
 operator fun Vector2.minus(other: Vector2): Vector2 = Vector2(this.x - other.x, this.y - other.y)
 operator fun Vector2.times(other: Vector2): Vector2 = Vector2(this.x * other.x, this.y * other.y)
 operator fun Vector2.div(other: Vector2): Vector2 = Vector2(this.x / other.x, this.y / other.y)
-operator fun Vector2.rangeTo(other: Vector2): Sequence<Sequence<Vector2>> =
-    (min(this.y, other.y)..max(this.y, other.y)).asSequence().map { y ->
-        (min(this.x, other.x)..max(this.x, other.x)).asSequence().map { x ->
-            Vector2(x, y)
+operator fun Vector2.rangeTo(other: Vector2): Sequence<Vector2> =
+    when {
+        other.x == this.x -> yRange(other).asSequence().map { Vector2(x, it) }
+        other.y == this.y -> xRange(other).asSequence().map { Vector2(it, y)}
+        else -> sequence {
+            (min(y, other.y)..max(y, other.y)).asSequence().flatMap { seqY ->
+                (min(x, other.x)..max(x, other.x)).asSequence().map { seqX ->
+                    Vector2(seqX, seqY)
+                }
+            }
         }
     }
 

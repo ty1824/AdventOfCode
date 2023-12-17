@@ -1,8 +1,8 @@
 package advent
 
-class AlmanacRange(val first: Long, val last: Long)
-
 object Day5 : AdventDay {
+    class AlmanacRange(val first: Long, val last: Long)
+
     override fun part1(input: List<String>): Any {
         val seeds = parseSeeds(input)
         val maps = parseMaps(input)

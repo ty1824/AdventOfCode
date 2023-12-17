@@ -57,20 +57,54 @@ interface Grid<T> {
                 }
             })
         }
+    }
 
+    fun getEdge(from: Vector2, direction: Direction): Vector2 = when (direction) {
+        Direction.Right -> from.copy(x = width - 1)
+        Direction.Down -> from.copy(y = height - 1)
+        Direction.Left -> from.copy(x = 0)
+        Direction.Up -> from.copy(y = 0)
+    }
+
+    fun getEdgeVectors(direction: Direction): Sequence<Vector2> = when (direction) {
+        Direction.Up -> Vector2(0 until width, 0..0)
+        Direction.Down -> Vector2(0 until width, (height-1)..(height-1))
+        Direction.Left -> Vector2(0..0, 0 until height)
+        Direction.Right -> Vector2((width-1)..(width-1), 0 until height)
+    }
+
+    fun firstInDirection(
+        from: Vector2,
+        direction: Direction,
+        inclusive: Boolean = false,
+        predicate: (Vector2) -> Boolean
+    ): Vector2? {
+        var current = if (inclusive) from else from + direction.vector
+        while (!predicate(current) && !isOffGrid(current)) {
+            current = current + direction.vector
+        }
+        return if (isOffGrid(current)) {
+            null
+        } else {
+            current
+        }
     }
 
     fun anyAdjacent(location: Vector2, predicate: (T) -> Boolean): Boolean {
-        val ret = ((location - Vector2(1, 1))..(location + Vector2(1, 1))).flatten().any {
+        val ret = ((location - Vector2(1, 1))..(location + Vector2(1, 1))).any {
             isOnGrid(it) && predicate(get(it))
         }
         return ret
     }
 
     fun getAdjacent(location: Vector2): Sequence<Vector2> =
-        ((location - Vector2(1, 1))..(location + Vector2(1, 1))).flatten().filter {
+        ((location - Vector2(1, 1))..(location + Vector2(1, 1))).filter {
             isOnGrid(it)
         }
+
+    companion object {
+        fun intGrid(width: Int, height: Int): IntGrid = IntGrid(IntArray(width * height), width, height)
+    }
 }
 
 class IntGrid(
@@ -78,7 +112,10 @@ class IntGrid(
     override val width: Int,
     override val height: Int
 ) : Grid<Int> {
-    override fun set(index: Int, value: Int) { elements[index] = value }
+    override fun set(index: Int, value: Int) {
+        elements[index] = value
+    }
+
     override fun get(index: Int): Int = elements[index]
 
     /**
@@ -87,10 +124,12 @@ class IntGrid(
     fun getInt(location: Vector2): Int = elements[locationToIndex(location)]
     fun getInt(index: Int): Int = elements[index]
 
-    override fun toString(): String =
-        elements.toList().chunked(width).joinToString("\n") {
-            it.joinToString("")
+    override fun toString(): String {
+        val maxLen = elements.max().toString().length + 1
+        return elements.toList().chunked(width).joinToString("\n") {
+            it.joinToString("") { it.toString().padStart(maxLen)}
         }
+    }
 
 }
 
@@ -121,4 +160,22 @@ class GenericGrid<T> (
 ) : Grid<T> {
     override fun set(index: Int, value: T) { elements[index] = value }
     override fun get(index: Int): T = elements[index]
+}
+
+class SparseGrid<T>(
+    val contents: MutableMap<Vector2, T>,
+    override val width: Int,
+    override val height: Int
+) : Grid<T?> {
+    override fun set(index: Int, value: T?) = set(indexToLocation(index), value)
+
+    override fun get(index: Int): T? = get(indexToLocation(index))
+
+    override fun set(location: Vector2, value: T?) {
+        if (value != null) {
+            contents[location] = value
+        } else contents.remove(location)
+    }
+
+    override fun get(location: Vector2): T? = contents[location]
 }
