@@ -25,9 +25,9 @@ operator fun Vector2.rangeTo(other: Vector2): Sequence<Vector2> =
         other.x == this.x -> yRange(other).asSequence().map { Vector2(x, it) }
         other.y == this.y -> xRange(other).asSequence().map { Vector2(it, y)}
         else -> sequence {
-            (min(y, other.y)..max(y, other.y)).asSequence().flatMap { seqY ->
-                (min(x, other.x)..max(x, other.x)).asSequence().map { seqX ->
-                    Vector2(seqX, seqY)
+            for (seqY in (min(y, other.y)..max(y, other.y))) {
+                for (seqX in (min(x, other.x)..max(x, other.x))) {
+                    yield(Vector2(seqX, seqY))
                 }
             }
         }
@@ -42,6 +42,7 @@ fun Vector2.sign(): Vector2 = Vector2(this.x.sign, this.y.sign)
 fun Vector2.minusX(x: Int): Vector2 = Vector2(this.x - x, this.y)
 fun Vector2.minusY(y: Int): Vector2 = Vector2(this.x, this.y - y)
 fun Vector2.manhattanDistance(): Int = this.abs().linearMagnitude()
+fun Vector2.cross(other: Vector2): Long = this.x.toLong() * other.y.toLong() - other.x.toLong() * this.y.toLong()
 operator fun Vector2.plus(value: Int): Vector2 = Vector2(this.x + value, this.y + value)
 operator fun Vector2.minus(value: Int): Vector2 = Vector2(this.x - value, this.y - value)
 operator fun Vector2.times(value: Int): Vector2 = Vector2(this.x * value, this.y * value)

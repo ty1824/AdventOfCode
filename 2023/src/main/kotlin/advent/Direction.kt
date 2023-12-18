@@ -12,5 +12,6 @@ enum class Direction(private val oppositeOrdinal: Int, val vector: Vector2) {
     Left(0, Vector2(-1, 0)),
     Up(1, Vector2(0, -1));
 
+    val rotateRight: Direction by lazy { values()[(this.ordinal + 1) % 4]}
     val opposite: Direction by lazy { values()[oppositeOrdinal] }
 }
