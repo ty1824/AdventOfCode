@@ -46,7 +46,6 @@ object Day17 : AdventDay {
                 listOf()
             } else if (loc == end) {
                 minimum = min(minimum, heatLoss)
-                println("New min found: $minimum")
                 listOf()
             } else {
                 minAt[loc to lastDirection] = heatLoss

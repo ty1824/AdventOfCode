@@ -7,7 +7,7 @@ object Day16 : AdventDay {
         val mirrors = parseMirrors(input)
         val grid = Grid.intGrid(input[0].length, input.size)
         val energized = followBeam(Vector2.zero, Direction.Right, grid, mirrors)
-        return grid.elements.count { it > 0 } to energized.size
+        return energized.size
     }
 
     override fun part2(input: List<String>): Any {
@@ -20,19 +20,15 @@ object Day16 : AdventDay {
         val down = mirrorGrid.getEdgeVectors(Direction.Up).maxOf { loc ->
             followBeamMemo(loc, Direction.Down, mirrorGrid, mirrorResults).size
         }
-        println("Max down: $down")
         val up = mirrorGrid.getEdgeVectors(Direction.Down).maxOf { loc ->
             followBeamMemo(loc, Direction.Up, mirrorGrid, mirrorResults).size
         }
-        println("Max up: $up")
         val right = mirrorGrid.getEdgeVectors(Direction.Left).maxOf { loc ->
             followBeamMemo(loc, Direction.Right, mirrorGrid, mirrorResults).size
         }
-        println("Max right: $right")
         val left = mirrorGrid.getEdgeVectors(Direction.Right).maxOf { loc ->
             followBeamMemo(loc, Direction.Left, mirrorGrid, mirrorResults).size
         }
-        println("Max left: $left")
         return max(max(down, up), max(right, left))
     }
 
