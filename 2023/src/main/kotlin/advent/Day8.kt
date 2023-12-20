@@ -1,5 +1,7 @@
 package advent
 
+import advent.Util.lcm
+
 object Day8 : AdventDay {
     override fun part1(input: List<String>): Any {
         val directions = parseInputDirections(input)
@@ -56,14 +58,7 @@ object Day8 : AdventDay {
         return steps
     }
 
-    fun gcd(a: Long, b: Long): Long {
-        return if (a == 0L) b else gcd(b % a, a)
-    }
 
-    // method to return LCM of two numbers
-    fun lcm(a: Long, b: Long): Long {
-        return a / gcd(a, b) * b
-    }
 
     fun parseInputDirections(input: List<String>): List<Boolean> =
         input[0].map { it == 'L' }
