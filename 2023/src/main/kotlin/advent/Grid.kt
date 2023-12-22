@@ -5,6 +5,14 @@ interface Grid<T> {
 
     val height: Int
 
+    val dimensions: Vector2
+        get() = Vector2(width, height)
+
+    val maxX: Int
+        get() = width - 1
+    val maxY: Int
+        get() = height - 1
+
     operator fun set(index: Int, value: T)
     operator fun set(location: Vector2, value: T) = set(locationToIndex(location), value)
     operator fun get(index: Int): T

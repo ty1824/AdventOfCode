@@ -20,6 +20,7 @@ operator fun Vector2.plus(other: Vector2): Vector2 = Vector2(this.x + other.x, t
 operator fun Vector2.minus(other: Vector2): Vector2 = Vector2(this.x - other.x, this.y - other.y)
 operator fun Vector2.times(other: Vector2): Vector2 = Vector2(this.x * other.x, this.y * other.y)
 operator fun Vector2.div(other: Vector2): Vector2 = Vector2(this.x / other.x, this.y / other.y)
+operator fun Vector2.rem(other: Vector2) = Vector2(x % other.x, y % other.y)
 operator fun Vector2.rangeTo(other: Vector2): Sequence<Vector2> =
     when {
         other.x == this.x -> yRange(other).asSequence().map { Vector2(x, it) }
@@ -47,5 +48,6 @@ operator fun Vector2.plus(value: Int): Vector2 = Vector2(this.x + value, this.y 
 operator fun Vector2.minus(value: Int): Vector2 = Vector2(this.x - value, this.y - value)
 operator fun Vector2.times(value: Int): Vector2 = Vector2(this.x * value, this.y * value)
 operator fun Vector2.div(value: Int): Vector2 = Vector2(this.x / value, this.y / value)
+operator fun Vector2.rem(value: Int) = Vector2(x % value, x % value)
 
 data class Path(val points: List<Vector2>)
